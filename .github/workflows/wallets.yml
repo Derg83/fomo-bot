@@ -1,0 +1,41 @@
+name: Wallet-Sammler
+
+# Einmal am Tag: Gewinner-Coins suchen, Wallets sammeln und bewerten.
+# Braucht das Secret HELIUS_API_KEY (Settings > Secrets and variables > Actions).
+on:
+  schedule:
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wallet-sammler
+  cancel-in-progress: false
+
+jobs:
+  sammeln:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Wallets sammeln und bewerten
+        env:
+          HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+        run: python3 wallet_collector.py
+
+      - name: Ergebnis speichern
+        if: always()
+        run: |
+          git config user.name "fomo-bot"
+          git config user.email "fomo-bot@users.noreply.github.com"
+          git add wallets.json wallet_pool.csv docs/wallets.html 2>/dev/null || true
+          git commit -q -m "Wallet-Sammler $(date -u +%d.%m.%H:%M) UTC" || exit 0
+          for i in 1 2 3 4 5; do
+            if git pull --rebase -q origin main && git push -q origin HEAD:main; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep 15
+          done
+          echo "Push fehlgeschlagen" && exit 1
