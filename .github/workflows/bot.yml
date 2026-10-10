@@ -29,11 +29,15 @@ jobs:
           git config user.email "fomo-bot@users.noreply.github.com"
           for i in $(seq 1 33); do
             start=$(date +%s)
-            git pull --rebase -q || true
+            git fetch -q origin main && git reset -q --hard origin/main
             python3 fomo_bot.py once || echo "Runde $i mit Fehler"
             git add -A
             if git commit -q -m "Bot-Runde $(date -u +%H:%M) UTC"; then
-              git pull --rebase -q && git push -q || echo "Push fehlgeschlagen"
+              if ! { git pull --rebase -q && git push -q; }; then
+                echo "Push fehlgeschlagen, Runde verworfen"
+                git rebase --abort 2>/dev/null || true
+                git fetch -q origin main && git reset -q --hard origin/main
+              fi
             fi
             if [ "$i" -lt 33 ]; then
               wait=$(( 600 - ( $(date +%s) - start ) ))
