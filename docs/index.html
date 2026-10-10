@@ -1,0 +1,48 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="60">
+<title>Fomo-Bot Dashboard</title><style>
+:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;
+--good:#1f8a5b;--bad:#c4413b;--chip:#eef1f5;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--fg:#e8eaed;--muted:#99a1ad;--line:#2a3039;
+--a:#6ea2ff;--b:#f0a35a;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:16px}
+h1{font-size:22px;margin:0}h2{font-size:17px;margin:28px 0 10px}h3{font-size:15px;margin:0 0 8px}
+.muted{color:var(--muted)}.small{font-size:13px}.stale{color:var(--bad);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-variant-numeric:tabular-nums;margin-top:6px}
+.kv span:nth-child(odd){color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:11px}.chart .grid line{stroke:var(--line)}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:13px}
+code{font-size:12px;word-break:break-all;color:var(--muted)}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:1px 9px;font-size:12px;margin:2px 4px 2px 0}
+.funnel div{display:flex;align-items:center;gap:10px;margin:4px 0}
+.funnel b{width:80px;font-weight:600;font-size:13px}.funnel i{display:block;height:18px;border-radius:4px;background:var(--a);opacity:.85}
+a{color:var(--a)}footer{margin-top:32px;color:var(--muted);font-size:13px}
+</style></head><body><div class="wrap">
+<header><h1>Fomo-Bot · Papier-Test</h1>
+<span class="small muted" id="upd" data-ts="1791668379">Letzte Runde: 10.10.2026 23:39 Uhr</span></header>
+<div class="grid"><div class="card"><h3><span class="dot" style="background:var(--a)"></span>Alle Coins</h3><div class="big">29.88 $</div><div><span class="neg">-0.4 %</span> seit Start (30 $)</div><div class="kv"><span>Trades</span><span>0</span><span>Trefferquote</span><span>– <span class="muted small">(Ziel über 56 %)</span></span><span>Ø Gewinner</span><span>–</span><span>Ø Verlierer</span><span>–</span><span>Offen</span><span>3 von 3</span></div></div><div class="card"><h3><span class="dot" style="background:var(--b)"></span>Nur ab 14 Tagen</h3><div class="big">30.00 $</div><div><span class="">+0.0 %</span> seit Start (30 $)</div><div class="kv"><span>Trades</span><span>0</span><span>Trefferquote</span><span>– <span class="muted small">(Ziel über 56 %)</span></span><span>Ø Gewinner</span><span>–</span><span>Ø Verlierer</span><span>–</span><span>Offen</span><span>0 von 3</span></div></div></div>
+<h2>Kontoverlauf</h2><div class="card"><p class="muted small">Das Diagramm erscheint nach den ersten Runden.</p></div>
+<h2>Offene Positionen (3)</h2>
+<div class="card scroll"><table><tr><th>Bot</th><th>Coin</th><th>Kauf</th><th>MC beim Kauf</th><th>Einsatz</th><th>Jetzt</th></tr><tr><td>Alle Coins</td><td><b>$CRAWL</b><br><code>BXoHJddsWJLHtAopeiSbKUSELsu8hSFMs8baGMDkpump</code><br><span class="small"><a href="https://dexscreener.com/solana/BXoHJddsWJLHtAopeiSbKUSELsu8hSFMs8baGMDkpump">Chart</a> · <a href="https://rugcheck.xyz/tokens/BXoHJddsWJLHtAopeiSbKUSELsu8hSFMs8baGMDkpump">RugCheck</a> · <a href="https://trench.bot/bundles/BXoHJddsWJLHtAopeiSbKUSELsu8hSFMs8baGMDkpump">Trench</a></span></td><td>10.10. 23:39</td><td>4.6 Mio.</td><td>3.90 $</td><td><span class="">+0.0 %</span></td></tr><tr><td>Alle Coins</td><td><b>$Agency</b><br><code>7VertkgF9KLhxxJXHX6uaWuoYZTP9LdGj2bWmVXVpump</code><br><span class="small"><a href="https://dexscreener.com/solana/7VertkgF9KLhxxJXHX6uaWuoYZTP9LdGj2bWmVXVpump">Chart</a> · <a href="https://rugcheck.xyz/tokens/7VertkgF9KLhxxJXHX6uaWuoYZTP9LdGj2bWmVXVpump">RugCheck</a> · <a href="https://trench.bot/bundles/7VertkgF9KLhxxJXHX6uaWuoYZTP9LdGj2bWmVXVpump">Trench</a></span></td><td>10.10. 23:39</td><td>4.3 Mio.</td><td>3.89 $</td><td><span class="">+0.0 %</span></td></tr><tr><td>Alle Coins</td><td><b>$moin</b><br><code>8DXqVUopcdviLvujTcpwEqkKzB43Arp6E1axzsEE5Btq</code><br><span class="small"><a href="https://dexscreener.com/solana/8DXqVUopcdviLvujTcpwEqkKzB43Arp6E1axzsEE5Btq">Chart</a> · <a href="https://rugcheck.xyz/tokens/8DXqVUopcdviLvujTcpwEqkKzB43Arp6E1axzsEE5Btq">RugCheck</a> · <a href="https://trench.bot/bundles/8DXqVUopcdviLvujTcpwEqkKzB43Arp6E1axzsEE5Btq">Trench</a></span></td><td>10.10. 23:39</td><td>264k</td><td>3.89 $</td><td><span class="">+0.0 %</span></td></tr></table></div>
+<h2>Letzte Trades</h2>
+<div class="card scroll"><p class="muted">Noch keine abgeschlossenen Trades.</p></div>
+<h2>Beobachtungsliste</h2><p class="small muted">Diese Coins haben alle Regeln bestanden. Gekauft wird erst beim stabilisierten Rücksetzer.</p>
+<div class="grid"><div class="card"><h3>Alle Coins</h3><div><span class="chip">$CALI</span><span class="small muted">23.4 Tage · MC 806k</span><br><code>8k4sBtEeK4pf26noKqApv8NBTnuSJcbdwpKYknk5PbAA</code></div><div><span class="chip">$QI</span><span class="small muted">1.7 Tage · MC 2.3 Mio.</span><br><code>8TiMkgvsrat9tM2esko8zVTt99LZLpefUM4SnZaziXaQ</code></div><div><span class="chip">$CLAUDIA</span><span class="small muted">3.8 Tage · MC 3.2 Mio.</span><br><code>2j5SaS7xy776qCBpyPQbZjyQSAtKiFgrwjfErthnW2ZM</code></div><div><span class="chip">$qOMPUTE</span><span class="small muted">0.9 Tage · MC 240k</span><br><code>BQAeeSowpwEx8Km8GcporcbuLKq4a7EQceH3F2qZpump</code></div><div><span class="chip">$swordcat</span><span class="small muted">12.5 Tage · MC 2.5 Mio.</span><br><code>5tCju6YNxHq5zrA6tGndr6F7TK42mpUFmeE31cSFpump</code></div><div><span class="chip">$GOMO</span><span class="small muted">6.0 Tage · MC 1.1 Mio.</span><br><code>9XKzy4KahcZaGJPJtz1PtqGPB3CiseoBrx7TcQhEpump</code></div><div><span class="chip">$COCKROACH</span><span class="small muted">11.3 Tage · MC 797k</span><br><code>H4KUxsEgCp2yDpFvyDuGM5k6XevSKKrrKUxZ3Zr6nyJc</code></div><div><span class="chip">$Altai</span><span class="small muted">0.3 Tage · MC 960k</span><br><code>Gyk9Z93Ri2JUjqES9HTpc7pxCJTLD7vhBhEjBhyApump</code></div><div><span class="chip">$TM</span><span class="small muted">0.6 Tage · MC 413k</span><br><code>6KDpQM4BVDdtAkjtyFDiBCkbii8q8BieEyXXm6kNpump</code></div><div><span class="chip">$SIB</span><span class="small muted">0.9 Tage · MC 141k</span><br><code>3HKKrXhDvGFWPdkALw3KofESZexsEx9opGtq37n9pump</code></div></div><div class="card"><h3>Nur ab 14 Tagen</h3><div><span class="chip">$CALI</span><span class="small muted">23.4 Tage · MC 806k</span><br><code>8k4sBtEeK4pf26noKqApv8NBTnuSJcbdwpKYknk5PbAA</code></div></div></div>
+<h2>Letzter Trichter</h2><div class="card funnel"><div><b>Eingang</b><i style="width:70%"></i><span>88</span></div><div><b>Markt</b><i style="width:20%"></i><span>25</span></div><div><b>Contract</b><i style="width:18%"></i><span>23</span></div><div><b>Holder</b><i style="width:11%"></i><span>14</span></div><div><b>Handel</b><i style="width:10%"></i><span>13</span></div><div><b>Timing</b><i style="width:8%"></i><span>10</span></div>
+<p class="small muted">Stand 23:39 Uhr</p></div>
+<footer>Nur Papier-Handel mit Live-Kursen, kein echtes Geld. 13 % pro Trade · Take-Profit +20 % ·
+Stop -20 % · max. 24 h · 1 % Gebühren je Seite. Die Seite lädt sich jede Minute neu.
+Kein Kaufsignal.</footer></div>
+<script>(function(){var e=document.getElementById('upd');var age=(Date.now()/1000-Number(e.dataset.ts))/60;
+if(age>40){e.className='small stale';e.textContent+=' – seit '+Math.round(age)+' Min. keine neue Runde';}})();</script>
+</body></html>
