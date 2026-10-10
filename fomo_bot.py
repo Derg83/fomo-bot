@@ -1,10 +1,11 @@
 """
-Fomo-Bot – TESTMODUS (Paper Trading), zwei Bots im Vergleich, mit Live-Dashboard
+Fomo-Bot – TESTMODUS (Paper Trading), drei Bots im Vergleich, mit Live-Dashboard
 Handelt mit echten Live-Kursen, aber nur auf dem Papier. Kein Geld, keine Wallet, kein Schlüssel.
 
-Zwei Bots mit getrennten Papier-Konten (je 13 % pro Trade):
-  "alle"     – jeder Coin, der den Trichter besteht (ab 6 h alt)
-  "14tage"   – nur Coins ab 14 Tagen Alter
+Drei Bots mit getrennten Papier-Konten (je 13 % pro Trade):
+  "alle"     – jeder Coin, der den Trichter besteht (ab 6 h alt), TP +20 % / Stop -20 %
+  "14tage"   – nur Coins ab 14 Tagen Alter, TP +20 % / Stop -20 %
+  "tempo"    – wie "alle", aber TP +10 % / Stop -8 %, 5 Positionen, max. 6 h -> mehr Trades
 
 Läuft auf zwei Arten:
   python fomo_bot.py           Dauerschleife auf deinem PC (jede Minute, Strg+C stoppt)
@@ -29,9 +30,13 @@ from datetime import datetime
 import memecoin_funnel as funnel
 
 # ======================= EINSTELLUNGEN =======================
+# Jeder Bot kann einzelne Einstellungen von unten überschreiben.
 BOTS = {
     "alle":   {"label": "Alle Coins",      "min_age_days": 0},
     "14tage": {"label": "Nur ab 14 Tagen", "min_age_days": 14},
+    "tempo":  {"label": "Tempo",           "min_age_days": 0,
+               "take_profit": 0.10, "stop_loss": 0.08, "max_open": 5, "max_hold_h": 6,
+               "cooldown_h": 4, "entry_h1_min": -20, "entry_h1_max": 10},
 }
 
 START_BALANCE = 30.0        # Papier-Startkapital pro Bot in $
@@ -57,6 +62,11 @@ HISTORY_MAX = 3000          # so viele Konto-Stände fürs Diagramm merken
 # =============================================================
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def P(name, key):
+    """Einstellung eines Bots: eigener Wert, sonst der globale von oben."""
+    return BOTS[name].get(key, globals()[key.upper()])
 META_FILE = os.path.join(HERE, "bot_meta.json")
 DASHBOARD = os.path.join(HERE, "docs", "index.html")
 
@@ -180,15 +190,15 @@ def equity(state, prices):
 
 def try_entries(name, state, prices):
     for a, w in list(state["watch"].items()):
-        if len(state["open"]) >= MAX_OPEN:
+        if len(state["open"]) >= P(name, "max_open"):
             return
         q = prices.get(a)
         if not q:
             continue
-        if not (ENTRY_H1_MIN <= q["h1"] <= ENTRY_H1_MAX and q["m5"] >= ENTRY_M5_MIN
-                and q["h24"] < ENTRY_MAX_24H):
+        if not (P(name, "entry_h1_min") <= q["h1"] <= P(name, "entry_h1_max")
+                and q["m5"] >= P(name, "entry_m5_min") and q["h24"] < P(name, "entry_max_24h")):
             continue
-        stake = min(state["cash"], equity(state, prices) * POSITION_PCT)
+        stake = min(state["cash"], equity(state, prices) * P(name, "position_pct"))
         if stake < 1:
             return
         fill = q["price"] * (1 + FEE_SLIPPAGE)
@@ -213,7 +223,7 @@ def close(name, state, a, price, reason):
              "hold_h": round((time.time() - p["entry_time"]) / 3600, 2), "age_d": p.get("age_d"),
              "entry_mc": p.get("entry_mc")}
     state["closed"].append(trade)
-    state["cooldown"][a] = time.time() + COOLDOWN_H * 3600
+    state["cooldown"][a] = time.time() + P(name, "cooldown_h") * 3600
     write_journal(name, trade)
     log(f"[{name}] VERKAUF (Papier) ${p['sym']}: {reason} -> {pnl:+.2f} $ ({trade['pnl_pct']:+.1f} %)  CA: {a}")
 
@@ -228,14 +238,14 @@ def manage_exits(name, state, prices):
             continue
         p["last_seen"], p["last_price"] = now, q["price"]
         change = q["price"] / p["entry_price"] - 1
-        if q["liq"] < p["entry_liq"] * (1 - LIQ_DROP_EXIT):
+        if q["liq"] < p["entry_liq"] * (1 - P(name, "liq_drop_exit")):
             close(name, state, a, q["price"], "Liquidität abgezogen (Rug-Verdacht)")
-        elif change >= TAKE_PROFIT:
+        elif change >= P(name, "take_profit"):
             close(name, state, a, q["price"], f"Take-Profit (+{change * 100:.0f} %)")
-        elif change <= -STOP_LOSS:
+        elif change <= -P(name, "stop_loss"):
             close(name, state, a, q["price"], f"Stop-Loss ({change * 100:.0f} %)")
-        elif now - p["entry_time"] > MAX_HOLD_H * 3600:
-            close(name, state, a, q["price"], f"Zeitlimit {MAX_HOLD_H} h ({change * 100:+.0f} %)")
+        elif now - p["entry_time"] > P(name, "max_hold_h") * 3600:
+            close(name, state, a, q["price"], f"Zeitlimit {P(name, 'max_hold_h')} h ({change * 100:+.0f} %)")
 
 
 def cycle(states, meta):
@@ -318,10 +328,10 @@ def report(states):
 
 # ---------------------------------------------------------------- Dashboard
 CSS = """
-:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;
+:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;
 --good:#1f8a5b;--bad:#c4413b;--chip:#eef1f5;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--fg:#e8eaed;--muted:#99a1ad;--line:#2a3039;
---a:#6ea2ff;--b:#f0a35a;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
+--a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 .wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
 header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:16px}
@@ -343,8 +353,60 @@ code{font-size:12px;word-break:break-all;color:var(--muted)}
 .chip{display:inline-block;background:var(--chip);border-radius:99px;padding:1px 9px;font-size:12px;margin:2px 4px 2px 0}
 .funnel div{display:flex;align-items:center;gap:10px;margin:4px 0}
 .funnel b{width:80px;font-weight:600;font-size:13px}.funnel i{display:block;height:18px;border-radius:4px;background:var(--a);opacity:.85}
+.run{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 16px}
+.btn{font:inherit;font-weight:600;border:0;border-radius:8px;padding:8px 14px;background:var(--a);color:#fff;cursor:pointer}
+.btn:focus-visible,.link:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.link{font:inherit;font-size:13px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+#tokform{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+#tokform[hidden]{display:none}
+#tokform input{font:inherit;flex:1 1 220px;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
 a{color:var(--a)}footer{margin-top:32px;color:var(--muted);font-size:13px}
 """
+
+
+RUN_JS = """
+(function(){
+var box=document.getElementById('runbox');
+var form=document.getElementById('tokform');
+setInterval(function(){ if(!form||form.hidden){ location.reload(); } }, 60000);
+if(!box) return;
+var repo=box.dataset.repo, KEY='fomo_gh_token';
+var btn=document.getElementById('runbtn'), msg=document.getElementById('runmsg'), inp=document.getElementById('tokinp');
+function get(){try{return localStorage.getItem(KEY);}catch(e){return null;}}
+function set(v){try{localStorage.setItem(KEY,v);}catch(e){}}
+function run(tok){
+  msg.textContent='Starte ...';
+  fetch('https://api.github.com/repos/'+repo+'/actions/workflows/bot.yml/dispatches',{method:'POST',
+    headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},
+    body:JSON.stringify({ref:'main'})})
+  .then(function(r){
+    if(r.status===204){ msg.textContent='Runde gestartet. In 2 bis 3 Minuten aktualisiert sich die Seite von selbst.'; }
+    else if(r.status===401||r.status===403||r.status===404){ msg.textContent='Token ungueltig oder ohne Recht "Actions: Read and write" (Fehler '+r.status+'). Bitte neuen Token eintragen.'; form.hidden=false; }
+    else { msg.textContent='GitHub meldet Fehler '+r.status+'. Starte die Runde notfalls ueber "Auf GitHub oeffnen".'; }
+  })
+  .catch(function(){ msg.textContent='Keine Verbindung zu GitHub.'; });
+}
+btn.addEventListener('click',function(){ var t=get(); if(t){ run(t); } else { form.hidden=false; inp.focus(); } });
+form.addEventListener('submit',function(e){ e.preventDefault(); var t=inp.value.trim(); if(!t) return; set(t); inp.value=''; form.hidden=true; run(t); });
+document.getElementById('tokdel').addEventListener('click',function(){ try{localStorage.removeItem(KEY);}catch(e){} msg.textContent='Token auf diesem Geraet geloescht.'; });
+})();
+"""
+
+
+def run_box():
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    if not repo:
+        return ""
+    r = html.escape(repo)
+    return (f'<div class="run" id="runbox" data-repo="{r}">'
+            f'<button class="btn" id="runbtn" type="button">Runde jetzt starten</button>'
+            f'<a class="small" href="https://github.com/{r}/actions/workflows/bot.yml">Auf GitHub öffnen</a>'
+            f'<button class="link" id="tokdel" type="button">Token vergessen</button>'
+            f'<span id="runmsg" class="small muted" aria-live="polite"></span>'
+            f'<form id="tokform" hidden><label class="small muted" for="tokinp">GitHub-Token, wird nur auf diesem Gerät gespeichert</label>'
+            f'<input id="tokinp" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_...">'
+            f'<button class="btn" type="submit">Speichern und starten</button>'
+            f'<a class="small" href="https://github.com/settings/personal-access-tokens/new">Token erstellen</a></form></div>')
 
 
 def pct(x, digits=1):
@@ -376,18 +438,22 @@ def equity_chart(meta):
 
     parts = [f'<svg class="chart" viewBox="0 0 {W} {H}" role="img" aria-label="Kontoverlauf beider Bots">']
     parts.append('<g class="grid">')
-    for v in (lo + pad, START_BALANCE, hi - pad):
+    drawn = []
+    for v in (START_BALANCE, hi - pad, lo + pad):
+        if any(abs(Y(v) - y) < 16 for y in drawn):
+            continue
+        drawn.append(Y(v))
         parts.append(f'<line x1="{L}" x2="{W - R}" y1="{Y(v):.1f}" y2="{Y(v):.1f}"/>'
                      f'<text x="{L - 6}" y="{Y(v) + 4:.1f}" text-anchor="end">{v:.2f} $</text>')
     parts.append('</g>')
     parts.append(f'<text x="{L}" y="{H - 6}">{berlin(x0):%d.%m. %H:%M}</text>'
                  f'<text x="{W - R}" y="{H - 6}" text-anchor="end">{berlin(x1):%d.%m. %H:%M}</text>')
-    colors = ["var(--a)", "var(--b)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)"]
     for i, _ in enumerate(BOTS):
         pts = " ".join(f"{X(h[0]):.1f},{Y(h[i + 1]):.1f}" for h in hist if len(h) > i + 1)
-        parts.append(f'<polyline fill="none" stroke="{colors[i % 2]}" stroke-width="2" points="{pts}"/>')
+        parts.append(f'<polyline fill="none" stroke="{colors[i % 3]}" stroke-width="2" points="{pts}"/>')
         last = hist[-1]
-        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 2]}"/>')
+        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 3]}"/>')
     parts.append('</svg>')
     return "".join(parts)
 
@@ -400,19 +466,21 @@ def coin_links(a):
 
 def write_dashboard(states, meta, prices):
     now = time.time()
-    colors = ["var(--a)", "var(--b)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)"]
     cards = []
     for i, (n, s) in enumerate(states.items()):
         x = summary(s, prices)
         rate = f"{x['rate']:.0f} %" if x["rate"] is not None else "–"
         cards.append(
-            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 2]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
+            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 3]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
             f'<div class="big">{x["equity"]:.2f} $</div><div>{pct(x["ret"])} seit Start ({START_BALANCE:.0f} $)</div>'
             f'<div class="kv"><span>Trades</span><span>{x["n"]}</span>'
             f'<span>Trefferquote</span><span>{rate} <span class="muted small">(Ziel über 56 %)</span></span>'
             f'<span>Ø Gewinner</span><span>{pct(x["avg_win"])}</span>'
             f'<span>Ø Verlierer</span><span>{pct(x["avg_loss"])}</span>'
-            f'<span>Offen</span><span>{x["open"]} von {MAX_OPEN}</span></div></div>')
+            f'<span>Offen</span><span>{x["open"]} von {P(n, "max_open")}</span></div>'
+            f'<p class="small muted">TP +{P(n, "take_profit") * 100:.0f} % · Stop -{P(n, "stop_loss") * 100:.0f} % · '
+            f'max. {P(n, "max_hold_h")} h · ab {BOTS[n]["min_age_days"]} Tagen</p></div>')
 
     open_rows, closed_rows, watch_html = [], [], []
     for n, s in states.items():
@@ -445,10 +513,11 @@ def write_dashboard(states, meta, prices):
 
     last_run = meta.get("last_run") or now
     doc = f"""<!doctype html><html lang="de"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="60">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fomo-Bot Dashboard</title><style>{CSS}</style></head><body><div class="wrap">
 <header><h1>Fomo-Bot · Papier-Test</h1>
 <span class="small muted" id="upd" data-ts="{int(last_run)}">Letzte Runde: {berlin(last_run):%d.%m.%Y %H:%M} Uhr</span></header>
+{run_box()}
 <div class="grid">{''.join(cards)}</div>
 <h2>Kontoverlauf</h2><div class="card">{equity_chart(meta)}</div>
 <h2>Offene Positionen ({len(open_rows)})</h2>
@@ -459,11 +528,12 @@ def write_dashboard(states, meta, prices):
 <div class="grid">{''.join(watch_html)}</div>
 <h2>Letzter Trichter</h2><div class="card funnel">{funnel_html or '<p class="muted">Noch kein Durchlauf.</p>'}
 <p class="small muted">Stand {berlin(meta.get("last_scan") or now):%H:%M} Uhr</p></div>
-<footer>Nur Papier-Handel mit Live-Kursen, kein echtes Geld. {POSITION_PCT * 100:.0f} % pro Trade · Take-Profit +{TAKE_PROFIT * 100:.0f} % ·
-Stop -{STOP_LOSS * 100:.0f} % · max. {MAX_HOLD_H} h · {FEE_SLIPPAGE * 100:.0f} % Gebühren je Seite. Die Seite lädt sich jede Minute neu.
+<footer>Nur Papier-Handel mit Live-Kursen, kein echtes Geld. {POSITION_PCT * 100:.0f} % pro Trade ·
+{FEE_SLIPPAGE * 100:.0f} % Gebühren je Seite. Regeln je Bot stehen in der jeweiligen Karte. Die Seite lädt sich jede Minute neu.
 Kein Kaufsignal.</footer></div>
 <script>(function(){{var e=document.getElementById('upd');var age=(Date.now()/1000-Number(e.dataset.ts))/60;
 if(age>40){{e.className='small stale';e.textContent+=' – seit '+Math.round(age)+' Min. keine neue Runde';}}}})();</script>
+<script>{RUN_JS}</script>
 </body></html>"""
     os.makedirs(os.path.dirname(DASHBOARD), exist_ok=True)
     with open(DASHBOARD, "w", encoding="utf-8") as f:
