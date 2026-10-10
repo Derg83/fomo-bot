@@ -1,12 +1,16 @@
 name: Fomo-Bot
 
+# Ein Lauf macht ca. 5,5 Stunden lang alle 10 Minuten eine Runde
+# und startet am Ende selbst den naechsten Lauf. Der Zeitplan unten
+# ist nur Reserve, falls die Kette mal abreisst.
 on:
   schedule:
-    - cron: "*/10 * * * *"   # alle 10 Minuten (GitHub startet oft ein paar Minuten später)
-  workflow_dispatch:          # Knopf "Run workflow" zum manuellen Starten
+    - cron: "7 * * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: fomo-bot
@@ -15,18 +19,30 @@ concurrency:
 jobs:
   runde:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 350
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Bot-Runde
-        run: python3 fomo_bot.py once
-
-      - name: Stand speichern
+      - name: Runden alle 10 Minuten
         run: |
           git config user.name "fomo-bot"
           git config user.email "fomo-bot@users.noreply.github.com"
-          git add -A
-          git commit -m "Bot-Runde $(date -u +%H:%M) UTC" || exit 0
-          git pull --rebase
-          git push
+          for i in $(seq 1 33); do
+            start=$(date +%s)
+            git pull --rebase -q || true
+            python3 fomo_bot.py once || echo "Runde $i mit Fehler"
+            git add -A
+            if git commit -q -m "Bot-Runde $(date -u +%H:%M) UTC"; then
+              git pull --rebase -q && git push -q || echo "Push fehlgeschlagen"
+            fi
+            if [ "$i" -lt 33 ]; then
+              wait=$(( 600 - ( $(date +%s) - start ) ))
+              if [ "$wait" -gt 0 ]; then sleep "$wait"; fi
+            fi
+          done
+
+      - name: Naechsten Lauf starten
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run bot.yml --ref main
