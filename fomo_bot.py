@@ -32,6 +32,7 @@ from datetime import datetime
 
 import memecoin_funnel as funnel
 import smart_radar as radar
+import notify
 
 # ======================= EINSTELLUNGEN =======================
 # Jeder Bot kann einzelne Einstellungen von unten überschreiben.
@@ -264,6 +265,9 @@ def try_entries(name, state, prices):
             state["open"][a]["trigger"] = w["wallets"]
         del state["watch"][a]
         log(f"[{name}] KAUF (Papier) ${w['sym']} für {stake:.2f} $ bei MC {funnel.fmt(q['mc'])}  CA: {a}")
+        notify.push(f"KAUF {BOTS[name]['label']}: ${w['sym']} bei MC {funnel.fmt(q['mc'])}",
+                    f"{exit_rule(name)} · Stop -{P(name, 'stop_loss') * 100:.0f} %\nCA: {a}",
+                    click=notify.dex(a), priority=4 if P(name, "source") == "smart" else 3, tags=["moneybag"])
 
 
 def close(name, state, a, price, reason):
@@ -288,6 +292,8 @@ def close(name, state, a, price, reason):
         LOSERS[a] = time.time() + LOSS_COOLDOWN_H * 3600
     write_journal(name, trade)
     log(f"[{name}] VERKAUF (Papier) ${p['sym']}: {reason} -> {pnl:+.2f} $ ({trade['pnl_pct']:+.1f} %)  CA: {a}")
+    notify.push(f"VERKAUF {BOTS[name]['label']}: ${p['sym']} {trade['pnl_pct']:+.1f} %", f"{reason}\nCA: {a}",
+                click=notify.dex(a), priority=3, tags=["chart_with_upwards_trend" if pnl > 0 else "chart_with_downwards_trend"])
 
 
 def manage_exits(name, state, prices):
@@ -311,6 +317,9 @@ def manage_exits(name, state, prices):
             state["cash"] += got
             p["partial"] = True
             log(f"[{name}] TEILVERKAUF (Papier) ${p['sym']} bei +{change * 100:.0f} %  CA: {a}")
+            notify.push(f"TEILVERKAUF {BOTS[name]['label']}: ${p['sym']} +{change * 100:.0f} %",
+                        f"{P(name, 'partial_part') * 100:.0f} % verkauft, Rest läuft weiter\nCA: {a}",
+                        click=notify.dex(a), priority=3, tags=["moneybag"])
             continue
         if q["liq"] < p["entry_liq"] * (1 - P(name, "liq_drop_exit")):
             close(name, state, a, q["price"], "Liquidität abgezogen (Rug-Verdacht)")
@@ -352,6 +361,15 @@ def cycle(states, meta):
             prio = {a for n in smart for a in states[n]["open"]}
             radar.tick(meta, priority=sorted(prio))
             sig = radar.active_signals(meta)
+            told = meta.setdefault("radar", {}).setdefault("notified", {})
+            for a, v in sig.items():
+                if now - told.get(a, 0) > 24 * 3600:
+                    told[a] = now
+                    mc = (meta["radar"]["pools"].get(a) or {}).get("mc") or 0
+                    notify.push(f"SMART-MONEY: ${v['sym']} (MC ca. {funnel.fmt(mc)})",
+                                f"{len(v['wallets'])} Wallet(s), davon {v['good']} gute, zusammen {v['usd']:.0f} $ gekauft\nCA: {a}",
+                                click=notify.dex(a), priority=4, tags=["eyes"])
+            meta["radar"]["notified"] = {a: t for a, t in told.items() if now - t < 48 * 3600}
             for n in smart:
                 s = states[n]
                 s["watch"] = {a: {"sym": v["sym"], "age_d": None, "mc": None, "wallets": v["wallets"],

@@ -136,16 +136,19 @@ def tick(meta, priority=(), budget_s=25):
         for row in rows:
             a = row.get("attributes") or {}
             w, h = a.get("tx_from_address"), a.get("tx_hash")
-            if w not in ws or not h or h in seen:
+            if w not in ws or not h:
                 continue
-            seen.add(h)
-            r["seen"].append(h)
+            key = f"{h[:24]}:{m[:8]}"
+            if key in seen:
+                continue
             if a.get("to_token_address") == m:
                 kind = "buy"
             elif a.get("from_token_address") == m:
                 kind = "sell"
             else:
                 continue
+            seen.add(key)
+            r["seen"].append(key)
             try:
                 t = calendar.timegm(time.strptime(a["block_timestamp"], "%Y-%m-%dT%H:%M:%SZ"))
             except Exception:
