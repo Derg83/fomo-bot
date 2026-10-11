@@ -200,6 +200,7 @@ def scan(meta):
             radar.update_pools(meta, coins)
         except Exception as e:
             log(f"Radar-Liste: {e}")
+        remember_seen(coins)
         counts, final, watch, _ = funnel.run_funnel(coins, funnel.rugcheck_live)
     except Exception as e:
         log(f"Trichter-Fehler: {e}")
@@ -209,6 +210,26 @@ def scan(meta):
     return [{"addr": c["addr"], "sym": c["sym"], "age_d": c["age_h"] / 24, "mc": c["mc"],
              "cluster": c.get("cluster"), "liq": c.get("liq") or 0, "top10": c.get("top10")}
             for c in final + watch]
+
+
+SEEN_FILE = os.path.join(HERE, "rueckblick", "gesehen.json")
+
+
+def remember_seen(coins):
+    """Jeden Coin, den der Trichter je gesehen hat, mit Zeitpunkt merken (für den Rückblick ohne Gewinner-Verzerrung)."""
+    try:
+        seen = load_json(SEEN_FILE, dict)
+        now = int(time.time())
+        new = 0
+        for c in coins:
+            if c["addr"] not in seen:
+                seen[c["addr"]] = {"t": now, "mc": round(c.get("mc") or 0), "src": "trichter"}
+                new += 1
+        if new:
+            os.makedirs(os.path.dirname(SEEN_FILE), exist_ok=True)
+            save_json(SEEN_FILE, seen)
+    except Exception as e:
+        log(f"Gesehen-Liste: {e}")
 
 
 def update_watch(name, state, candidates):

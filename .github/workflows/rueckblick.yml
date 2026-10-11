@@ -14,6 +14,11 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
+      - name: Vorhandene Daten holen
+        run: |
+          git fetch -q --depth 1 origin +rueckblick-daten:refs/remotes/origin/rueckblick-daten || true
+          mkdir -p rueckblick
+          git show origin/rueckblick-daten:rueckblick/coins.json.gz > rueckblick/coins.json.gz 2>/dev/null || rm -f rueckblick/coins.json.gz
       - name: Kursverläufe sammeln
         run: python3 rueckblick_sammeln.py
       - name: Auf Branch rueckblick-daten speichern

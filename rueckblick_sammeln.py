@@ -22,7 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "rueckblick")
 OUT = os.path.join(OUT_DIR, "coins.json.gz")
 GT = "https://api.geckoterminal.com/api/v2/networks/solana"
-GT_PAUSE = 2.2            # GeckoTerminal: 30 Abfragen pro Minute
+GT_PAUSE = 2.6            # GeckoTerminal: 30 Abfragen pro Minute (etwas Luft lassen)
 MAX_COINS = 650
 MC_MIN, MC_MAX = 20_000, 300_000_000
 MIN_LIQ = 3_000
@@ -32,15 +32,22 @@ def log(msg):
     print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
+STATS = {"ok": 0, "fehler": 0, "warten": 0}
+
+
 def gt(path):
-    for attempt in range(4):
+    err = None
+    for attempt in range(5):
         try:
             res = funnel.get(f"{GT}{path}", timeout=30)
             time.sleep(GT_PAUSE)
+            STATS["ok"] += 1
             return res
         except Exception as e:
-            time.sleep(GT_PAUSE * (attempt + 2))
             err = e
+            STATS["warten"] += 1
+            time.sleep(20 * (attempt + 1) if "429" in str(e) else GT_PAUSE * (attempt + 2))
+    STATS["fehler"] += 1
     log(f"  GeckoTerminal {path[:60]}: {err}")
     return {}
 
@@ -86,6 +93,7 @@ def universe():
     own("coin_check.json", lambda c: list((c.get("coins") or {})) if isinstance(c.get("coins"), dict)
         else [x.get("addr") for x in c.get("coins") or []])
     own("wallets.json", lambda w: list(w.get("winners", {})))
+    own("rueckblick/gesehen.json", lambda g: list(g))
     log(f"mit eigener Historie: {len(src)} Coins")
     return src
 
@@ -120,16 +128,24 @@ def dex_info(mints):
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
+    old = {}
+    if os.path.exists(OUT):       # vorhandene Daten weiterverwenden, nur fehlende/alte Coins neu laden
+        with gzip.open(OUT, "rt", encoding="utf-8") as f:
+            old = json.load(f).get("coins", {})
     src = universe()
     info = dex_info(src)
     coins = [(m, i) for m, i in info.items()
              if MC_MIN <= i["mc"] <= MC_MAX and i["liq"] >= MIN_LIQ and i["supply"] > 0 and i["pair"]]
-    # Historie zuerst (sonst fehlen die gestorbenen Coins), danach nach Volumen-Quelle
-    coins.sort(key=lambda x: ("historie" not in src[x[0]], -x[1]["liq"]))
+    # Historie zuerst (sonst fehlen die gestorbenen Coins), dann neue Coins, dann der Rest
+    coins.sort(key=lambda x: ("historie" not in src[x[0]], x[0] in old, -x[1]["liq"]))
     coins = coins[:MAX_COINS]
-    log(f"{len(coins)} Coins mit Marktdaten, lade stündliche Kerzen ...")
-    data = {}
+    log(f"{len(coins)} Coins mit Marktdaten ({sum(m in old for m, _ in coins)} schon vorhanden), lade stündliche Kerzen ...")
+    data = dict(old)
+    deadline = time.time() + 70 * 60
     for n, (m, i) in enumerate(coins, 1):
+        if time.time() > deadline:
+            log("Zeitlimit erreicht, speichere den Stand.")
+            break
         res = gt(f"/pools/{i['pair']}/ohlcv/hour?aggregate=1&limit=1000&currency=usd&token={m}")
         rows = ((res.get("data") or {}).get("attributes") or {}).get("ohlcv_list") or []
         if len(rows) < 12:
@@ -138,10 +154,10 @@ def main():
         data[m] = {**{k: i[k] for k in ("sym", "name", "pair", "supply", "liq", "mc", "dex", "created_min")},
                    "src": sorted(src[m]), "ohlcv": [[int(r[0])] + [float(x) for x in r[1:6]] for r in rows]}
         if n % 50 == 0:
-            log(f"  {n}/{len(coins)}")
+            log(f"  {n}/{len(coins)}  {STATS}")
     with gzip.open(OUT, "wt", encoding="utf-8") as f:
-        json.dump({"t": time.time(), "coins": data}, f)
-    log(f"Fertig: {len(data)} Coins gespeichert ({os.path.getsize(OUT) / 1e6:.1f} MB)")
+        json.dump({"t": time.time(), "coins": data, "stats": STATS}, f)
+    log(f"Fertig: {len(data)} Coins gespeichert ({os.path.getsize(OUT) / 1e6:.1f} MB), {STATS}")
 
 
 if __name__ == "__main__":
