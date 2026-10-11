@@ -38,7 +38,7 @@ NEW_WINNERS_PER_RUN = 15      # so viele neue Gewinner-Coins pro Lauf auswerten
 WINNERS_KEEP_D = 30           # Gewinner-Coins so lange merken
 
 # Kandidaten pro Gewinner-Coin
-HOLDERS_PER_COIN = 15         # Top-Holder (ohne Pools/Dev/Insider)
+HOLDERS_PER_COIN = 5          # Top-Holder (ohne Pools/Dev/Insider) – 1. Lauf: kaum echte Trader darunter
 HOLDER_MAX_PCT = 8            # über 8 % des Supplys = eher Dev/Locker/Börse, nicht nehmen
 GT_TRADERS_PER_COIN = 15      # große Trader der letzten 24 h
 GT_MIN_TRADE_USD = 300        # ab dieser Tradegröße
@@ -527,7 +527,9 @@ def queue(data):
             due = t - last > RECHECK_OUT_D * 86400
         if due:
             todo.append(w)
-    todo.sort(key=lambda w: (w.get("status") != "Pool", -len(w.get("coins") or {}), w.get("checked") or 0))
+    # Trader zuerst: im 1. Lauf kamen alle Pool-Wallets aus den Tradern, fast keine aus den Holdern
+    todo.sort(key=lambda w: (w.get("status") != "Pool", "Trader" not in (w.get("coins") or {}).values(),
+                             -len(w.get("coins") or {}), w.get("checked") or 0))
     return todo
 
 
