@@ -1,0 +1,49 @@
+name: Rueckblick-Frueh-Kaeufer
+
+# Auf Knopfdruck: Wer hat bei den Gewinner-Coins VOR dem Lauf gekauft? Bewertet die Wallets und
+# übernimmt sie in den Wallet-Pool (läuft nie gleichzeitig mit dem Wallet-Sammler).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wallet-sammler
+  cancel-in-progress: false
+
+jobs:
+  frueh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+      - name: Daten holen und Gewinner bestimmen
+        run: |
+          git fetch -q --depth 1 origin +rueckblick-daten:refs/remotes/origin/rueckblick-daten
+          mkdir -p rueckblick
+          git show origin/rueckblick-daten:rueckblick/coins.json.gz > rueckblick/coins.json.gz
+          python3 rueckblick_analyse.py rueckblick/coins.json.gz > /tmp/analyse.txt
+          tail -5 /tmp/analyse.txt
+      - name: Früh-Käufer suchen und bewerten
+        env:
+          HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+        run: python3 rueckblick_wallets.py
+      - name: Ergebnis speichern
+        if: always()
+        run: |
+          git config user.name "fomo-bot"
+          git config user.email "fomo-bot@users.noreply.github.com"
+          mkdir -p /tmp/out
+          for f in wallets.json wallet_pool.csv docs/wallets.html rueckblick/frueh_kaeufer.json; do
+            [ -f "$f" ] && mkdir -p "/tmp/out/$(dirname $f)" && cp "$f" "/tmp/out/$f"
+          done
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp -r /tmp/out/. .
+            git add wallets.json wallet_pool.csv docs/wallets.html rueckblick/frueh_kaeufer.json 2>/dev/null || true
+            git commit -q -m "Früh-Käufer der Gewinner $(date -u +%d.%m.%H:%M) UTC" || exit 0
+            if git push -q origin HEAD:main; then echo "gespeichert"; exit 0; fi
+            sleep 20
+          done
+          exit 1

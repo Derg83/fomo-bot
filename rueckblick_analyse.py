@@ -122,18 +122,18 @@ def winners(coins, data):
     for m, (c, s, f) in data.items():
         best = None
         for i in range(24, len(s) - 1):
-            lo = s[i][3]
-            if lo <= 0:
+            lo = s[i][4]
+            if lo <= 0 or lo * c["supply"] < 20_000 or s[i][5] <= 0:
                 continue
-            hi_j = max(range(i, min(len(s), i + 72)), key=lambda j: s[j][2])
-            mult = s[hi_j][2] / lo
+            hi_j = max(range(i, min(len(s), i + 72)), key=lambda j: s[j][4])
+            mult = s[hi_j][4] / lo
             if mult >= 3 and (best is None or mult > best[0]):
                 best = (mult, i, hi_j)
         if best:
             mult, i, j = best
             ft = f[i] or {}
             out.append({"addr": m, "sym": c["sym"], "mult": round(mult, 1), "start_t": s[i][0],
-                        "start_mc": s[i][3] * c["supply"], "peak_mc": s[j][2] * c["supply"],
+                        "start_mc": s[i][4] * c["supply"], "peak_mc": s[j][4] * c["supply"],
                         "hours": j - i, "now_mc": s[-1][4] * c["supply"], "feat": ft})
     return sorted(out, key=lambda w: -w["mult"])
 
@@ -189,8 +189,15 @@ def summary(trades):
 
 
 def main():
-    path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "rueckblick", "coins.json.gz")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    path = args[0] if args else os.path.join(os.path.dirname(__file__), "rueckblick", "coins.json.gz")
     coins = load(path)
+    seen_path = os.path.join(os.path.dirname(path), "gesehen.json")
+    seen = {}
+    if os.path.exists(seen_path):
+        with open(seen_path, encoding="utf-8") as f:
+            seen = json.load(f)
+    only_seen = "--alle" not in sys.argv
     data = {}
     for m, c in coins.items():
         s = series(c)
@@ -202,12 +209,35 @@ def main():
     print(f"{len(data)} Coins, {len(ts)} Coin-Stunden, Zeitraum bis Split: 60 % / 40 %")
 
     W = winners(coins, data)
-    print(f"\n=== Gewinner (3x+ vom Tief in ≤72 h): {len(W)} von {len(data)} Coins ===")
+    n_all = len(data)
+    # Ab hier nur noch "gesehene" Coins ab dem Zeitpunkt, an dem unsere Tools sie gesehen haben:
+    # sonst wären nur Coins drin, die HEUTE noch Volumen haben (= Überlebende), und alles sähe zu gut aus.
+    if only_seen and seen:
+        for m in list(data):
+            if m not in seen:
+                del data[m]
+                continue
+            c, s_, f = data[m]
+            t0 = seen[m]["t"]
+            data[m] = (c, s_, [ft if (ft and ft["t"] >= t0) else None for ft in f])
+        ts = sorted(ft["t"] for _, _, f in data.values() for ft in f if ft)
+        t_split = ts[int(len(ts) * 0.6)] if ts else 0
+        print(f"\nKohorte ohne Überlebens-Verzerrung: {len(data)} Coins, {len(ts)} Coin-Stunden ab dem ersten Sehen")
+    print(f"\n=== Gewinner (3x+ vom Tief in ≤72 h, alle Daten): {len(W)} von {n_all} Coins ===")
     for w in W[:40]:
         ft = w["feat"]
         print(f"  ${w['sym']:<10} {w['mult']:>5}x  Start-MC {w['start_mc'] / 1e3:>7.0f}k -> {w['peak_mc'] / 1e3:>8.0f}k in {w['hours']:>2} h | "
               f"Alter {ft.get('age_h', 0) / 24:>5.1f} T, vom Hoch {ft.get('dd_ath', 0) * 100:>4.0f} %, Boden seit {ft.get('h_since_low', 0):>3} h, "
               f"Vol-Beschl. {ft.get('vol_accel', 0):>4.1f} | {w['addr']}")
+
+    prof = [w["feat"] for w in W if w["feat"]]
+    if prof:
+        print("\n=== Profil beim Laufbeginn (Median der Gewinner) ===")
+        for k, lab in (("mc", "MC"), ("age_h", "Alter (h)"), ("dd_ath", "Kurs/Hoch"), ("h_since_low", "Std. seit Tief"),
+                       ("r24", "24 h"), ("r1", "1 h"), ("vol24_mc", "Vol24/MC"), ("vol_accel", "Vol-Beschl.")):
+            vals = sorted(p[k] for p in prof)
+            q = lambda x: vals[int(x * (len(vals) - 1))]
+            print(f"  {lab:<15} 25 %: {q(.25):>10.2f}   Median: {q(.5):>10.2f}   75 %: {q(.75):>10.2f}")
 
     # Grundgesamtheit: alle Coin-Stunden mit MC 30k-30M, Ergebnis für Stop 30 / Ziel +100 %
     rows = []
