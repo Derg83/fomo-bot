@@ -31,6 +31,7 @@ import time
 from datetime import datetime
 
 import memecoin_funnel as funnel
+import smart_radar as radar
 
 # ======================= EINSTELLUNGEN =======================
 # Jeder Bot kann einzelne Einstellungen von unten überschreiben.
@@ -48,6 +49,12 @@ BOTS = {
     "qualitaet": {"label": "Qualität + Momentum", "min_age_days": 0,
                   "take_profit": 0.20, "stop_loss": 0.30, "max_hold_h": 24,
                   "min_mc": 1_000_000, "min_liq_mc": 0.10, "max_top10": 25, "momentum": True},
+    # Kauft sofort mit, wenn unsere Smart-Wallets einen kleinen Coin kaufen (Radar), verkauft, wenn sie verkaufen
+    "smart":  {"label": "Smart-Money", "min_age_days": 0, "source": "smart", "max_open": 4,
+               "min_mc": 100_000, "max_mc_entry": 1_500_000,
+               "entry_h1_min": -50, "entry_h1_max": 100, "entry_m5_min": -100, "entry_max_24h": 1000,
+               "take_profit": 99, "stop_loss": 0.30, "max_hold_h": 48,
+               "partial_tp": 0.50, "partial_part": 0.5, "trail_dist": 0.25, "cooldown_h": 24},
 }
 
 START_BALANCE = 30.0        # Papier-Startkapital pro Bot in $
@@ -79,10 +86,13 @@ HISTORY_MAX = 3000          # so viele Konto-Stände fürs Diagramm merken
 MIN_MC = 0                  # Coin-Filter je Bot: Market Cap mindestens ($)
 MIN_LIQ_MC = 0              # Liquidität mindestens x der Market Cap
 MAX_TOP10 = 100             # Top-10-Holder höchstens x %
+MAX_MC_ENTRY = 0            # Market Cap beim Kauf höchstens (0 = egal)
+SOURCE = "trichter"         # woher die Kauf-Kandidaten kommen: "trichter" oder "smart" (Radar)
 MOMENTUM = False            # Einstieg nur, wenn Volumen der letzten 6 h über dem Tagesschnitt und mehr Käufe als Verkäufe (1 h)
 # =============================================================
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+RADAR_META = {}   # Verweis auf meta der laufenden Runde (für den Radar)
 LOSERS = {}   # CA -> gesperrt bis (gemeinsam für alle Bots, gespeichert in bot_meta.json)
 
 
@@ -185,6 +195,10 @@ def scan(meta):
     try:
         src = funnel.collect_candidates()
         coins = funnel.market_data(src)
+        try:
+            radar.update_pools(meta, coins)
+        except Exception as e:
+            log(f"Radar-Liste: {e}")
         counts, final, watch, _ = funnel.run_funnel(coins, funnel.rugcheck_live)
     except Exception as e:
         log(f"Trichter-Fehler: {e}")
@@ -197,6 +211,8 @@ def scan(meta):
 
 
 def update_watch(name, state, candidates):
+    if P(name, "source") == "smart":
+        return      # Kandidaten kommen vom Radar, nicht vom Trichter
     now = time.time()
     state["watch"] = {}
     for c in candidates:
@@ -230,6 +246,8 @@ def try_entries(name, state, prices):
         if not (P(name, "entry_h1_min") <= q["h1"] <= P(name, "entry_h1_max")
                 and q["m5"] >= P(name, "entry_m5_min") and q["h24"] < P(name, "entry_max_24h")):
             continue
+        if P(name, "source") == "smart" and not (P(name, "min_mc") <= q["mc"] <= (P(name, "max_mc_entry") or 1e18)):
+            continue
         if P(name, "momentum") and not (q.get("v6", 0) / 6 > q.get("v24", 0) / 24 and q.get("b1", 0) > q.get("s1", 0)):
             continue
         stake = min(state["cash"], equity(state, prices) * P(name, "position_pct"))
@@ -242,6 +260,8 @@ def try_entries(name, state, prices):
                             "entry_mc": q["mc"], "age_d": w.get("age_d"), "last_seen": time.time(),
                             "last_price": q["price"], "peak": q["price"], "trough": q["price"],
                             "realized": 0.0, "partial": False}
+        if w.get("wallets"):
+            state["open"][a]["trigger"] = w["wallets"]
         del state["watch"][a]
         log(f"[{name}] KAUF (Papier) ${w['sym']} für {stake:.2f} $ bei MC {funnel.fmt(q['mc'])}  CA: {a}")
 
@@ -294,6 +314,8 @@ def manage_exits(name, state, prices):
             continue
         if q["liq"] < p["entry_liq"] * (1 - P(name, "liq_drop_exit")):
             close(name, state, a, q["price"], "Liquidität abgezogen (Rug-Verdacht)")
+        elif p.get("trigger") and radar.sold_since(RADAR_META, a, p["trigger"], p["entry_time"] - 120):
+            close(name, state, a, q["price"], f"Smart-Wallet verkauft ({change * 100:+.0f} %)")
         elif p.get("partial") and tdist and q["price"] <= p["peak"] * (1 - tdist):
             close(name, state, a, q["price"],
                   f"Trailing ({(p['peak'] / p['entry_price'] - 1) * 100:+.0f} % Hoch, raus bei {change * 100:+.0f} %)")
@@ -322,11 +344,36 @@ def cycle(states, meta):
             for n, s in states.items():
                 update_watch(n, s, candidates)
             meta["last_scan"] = time.time()
+    global RADAR_META
+    RADAR_META = meta
+    smart = [n for n in states if P(n, "source") == "smart"]
+    if smart:
+        try:
+            prio = {a for n in smart for a in states[n]["open"]}
+            radar.tick(meta, priority=sorted(prio))
+            sig = radar.active_signals(meta)
+            for n in smart:
+                s = states[n]
+                s["watch"] = {a: {"sym": v["sym"], "age_d": None, "mc": None, "wallets": v["wallets"],
+                                  "good": v["good"], "usd": v["usd"]}
+                              for a, v in sig.items()
+                              if a not in s["open"] and s["cooldown"].get(a, 0) <= now and LOSERS.get(a, 0) <= now}
+        except Exception as e:
+            log(f"Radar-Fehler: {e}")
     addrs = set()
     for s in states.values():
         addrs |= set(s["open"]) | set(s["watch"])
         addrs |= {t["addr"] for t in s["closed"] if pending_after(t, now)}
     prices = get_prices(addrs) if addrs else {}
+    for n in smart:      # Sicherheits-Check nur für Signal-Coins, deren MC passt (spart RugCheck-Abfragen)
+        s = states[n]
+        for a in list(s["watch"]):
+            q = prices.get(a)
+            if not q or not (P(n, "min_mc") <= q["mc"] <= (P(n, "max_mc_entry") or 1e18)):
+                continue
+            ok, why = radar.safety(meta, a)
+            if not ok:
+                del s["watch"][a]
     for n, s in states.items():
         manage_exits(n, s, prices)
         # Verlierer, die ein anderer Bot gerade gesperrt hat, nicht mehr kaufen
@@ -425,10 +472,10 @@ def report(states):
 
 # ---------------------------------------------------------------- Dashboard
 CSS = """
-:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;--d:#13897c;--e:#c2417a;
+:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;--d:#13897c;--e:#c2417a;--f:#5f7d1f;
 --good:#1f8a5b;--bad:#c4413b;--chip:#eef1f5;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--fg:#e8eaed;--muted:#99a1ad;--line:#2a3039;
---a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--d:#3cc7b6;--e:#f07aa8;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
+--a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--d:#3cc7b6;--e:#f07aa8;--f:#a6cf5a;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 .wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
 header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:16px}
@@ -545,12 +592,12 @@ def equity_chart(meta):
     parts.append('</g>')
     parts.append(f'<text x="{L}" y="{H - 6}">{berlin(x0):%d.%m. %H:%M}</text>'
                  f'<text x="{W - R}" y="{H - 6}" text-anchor="end">{berlin(x1):%d.%m. %H:%M}</text>')
-    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)", "var(--f)"]
     for i, _ in enumerate(BOTS):
         pts = " ".join(f"{X(h[0]):.1f},{Y(h[i + 1]):.1f}" for h in hist if len(h) > i + 1)
-        parts.append(f'<polyline fill="none" stroke="{colors[i % 5]}" stroke-width="2" points="{pts}"/>')
+        parts.append(f'<polyline fill="none" stroke="{colors[i % 6]}" stroke-width="2" points="{pts}"/>')
         last = hist[-1]
-        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 5]}"/>')
+        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 6]}"/>')
     parts.append('</svg>')
     return "".join(parts)
 
@@ -596,13 +643,13 @@ def bot_filters(n):
 
 def write_dashboard(states, meta, prices):
     now = time.time()
-    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)", "var(--f)"]
     cards = []
     for i, (n, s) in enumerate(states.items()):
         x = summary(s, prices)
         rate = f"{x['rate']:.0f} %" if x["rate"] is not None else "–"
         cards.append(
-            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 5]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
+            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 6]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
             f'<div class="big">{x["equity"]:.2f} $</div><div>{pct(x["ret"])} seit Start ({START_BALANCE:.0f} $)</div>'
             f'<div class="kv"><span>Trades</span><span>{x["n"]}</span>'
             f'<span>Trefferquote</span><span>{rate} <span class="muted small">(Ziel über 56 %)</span></span>'
@@ -627,13 +674,29 @@ def write_dashboard(states, meta, prices):
                 f'<td>{berlin(t["exit_time"]):%d.%m. %H:%M}</td><td>{pct(t["pnl_pct"])}<br>'
                 f'<span class="small muted">{t["pnl"]:+.2f} $</span></td><td class="small">{html.escape(t["reason"])}{trade_extra(t)}</td></tr>'))
         chips = "".join(f'<div><span class="chip">${html.escape(w["sym"])}</span>'
-                        f'<span class="small muted">{w.get("age_d", "?")} Tage · MC {funnel.fmt(w.get("mc") or 0)}'
+                        f'<span class="small muted">'
+                        f'{(str(len(w["wallets"])) + " Smart-Wallets · " + str(w.get("usd", 0)) + " $ gekauft") if w.get("wallets") else (str(w.get("age_d", "?")) + " Tage · MC " + funnel.fmt(w.get("mc") or 0))}'
                         f'{" · Cluster " + format(w["cluster"], ".1f") + " %" if w.get("cluster") is not None else ""}</span>'
                         f'<br><code>{a}</code><br><span class="small">{coin_links(a)}</span></div>'
                         for a, w in s["watch"].items())
         watch_html.append(f'<div class="card"><h3>{html.escape(BOTS[n]["label"])}</h3>'
                           f'{chips or "<p class=muted>Gerade nichts, was alle Regeln besteht.</p>"}</div>')
     closed_rows = [r for _, r in sorted(closed_rows, reverse=True)[:20]]
+
+    radar_rows = []
+    rs = (meta.get("radar") or {})
+    for m, sg in sorted((rs.get("signals") or {}).items(), key=lambda x: -x[1].get("last", 0))[:15]:
+        buys, sells = sg.get("buys", []), sg.get("sells", [])
+        good = len({b["w"] for b in buys if b.get("good")})
+        radar_rows.append(
+            f'<tr><td><b>${html.escape(sg.get("sym", "?"))}</b><br><code>{m}</code><br><span class="small">{coin_links(m)}</span></td>'
+            f'<td>{len({b["w"] for b in buys})} Wallets ({good} gute)<br><span class="small muted">{sum(b["usd"] for b in buys):.0f} $</span></td>'
+            f'<td>{len({x["w"] for x in sells})}</td><td>{funnel.fmt(sg.get("mc_first") or 0)}</td>'
+            f'<td>{berlin(sg.get("last", now)):%d.%m. %H:%M}</td></tr>')
+    radar_html = (f'<p class="small muted">{len(rs.get("pools") or {})} kleine Coins unter Beobachtung · '
+                  f'{len(radar.wallets())} Pool-Wallets</p>')
+    radar_html += ('<table><tr><th>Coin</th><th>Gekauft von</th><th>Verkauft von</th><th>MC beim 1. Kauf</th><th>Zuletzt</th></tr>'
+                   + "".join(radar_rows) + '</table>') if radar_rows else '<p class="muted">Noch keine Käufe unserer Wallets gesehen.</p>'
 
     counts = meta.get("counts") or {}
     funnel_html = ""
@@ -659,6 +722,8 @@ def write_dashboard(states, meta, prices):
 <div class="card scroll">{'<table><tr><th>Bot</th><th>Coin</th><th>Verkauf</th><th>Ergebnis</th><th>Grund</th></tr>' + ''.join(closed_rows) + '</table>' if closed_rows else '<p class="muted">Noch keine abgeschlossenen Trades.</p>'}</div>
 <h2>Beobachtungsliste</h2><p class="small muted">Diese Coins haben alle Regeln bestanden. Gekauft wird erst beim stabilisierten Rücksetzer.</p>
 <div class="grid">{''.join(watch_html)}</div>
+<h2>Smart-Money-Radar</h2><p class="small muted">Käufe und Verkäufe unserer Pool-Wallets in kleinen Coins (letzte 72 h).</p>
+<div class="card scroll">{radar_html}</div>
 <h2>Letzter Trichter</h2><div class="card funnel">{funnel_html or '<p class="muted">Noch kein Durchlauf.</p>'}
 <p class="small muted">Stand {berlin(meta.get("last_scan") or now):%H:%M} Uhr</p></div>
 <footer>Nur Papier-Handel mit Live-Kursen, kein echtes Geld. {POSITION_PCT * 100:.0f} % pro Trade ·

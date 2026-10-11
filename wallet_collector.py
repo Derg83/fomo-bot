@@ -43,6 +43,12 @@ HOLDERS_PER_COIN = 5          # Top-Holder (ohne Pools/Dev/Insider) – 1. Lauf:
 HOLDER_MAX_PCT = 8            # über 8 % des Supplys = eher Dev/Locker/Börse, nicht nehmen
 GT_TRADERS_PER_COIN = 15      # große Trader der letzten 24 h
 GT_MIN_TRADE_USD = 300        # ab dieser Tradegröße
+# Früh-Käufer: Trader kleiner Coins aus dem Smart-Money-Radar (MC 150k-1,5 Mio.), damit der Pool
+# nicht nur aus späten Käufern großer Coins besteht
+SMALL_COINS_PER_RUN = 15      # so viele kleine Coins pro Lauf (die mit dem meisten Volumen)
+SMALL_MC_MIN, SMALL_MC_MAX = 150_000, 1_500_000
+SMALL_MIN_TRADE_USD = 150     # bei kleinen Coins schon ab 150 $
+SMALL_TRADERS_PER_COIN = 10
 
 # Auslesen und Bewerten
 TX_PER_WALLET = 150           # so viele letzte Transaktionen pro Wallet auswerten
@@ -495,12 +501,12 @@ def holders_of(c):
     return out, rc
 
 
-def traders_of(c):
+def traders_of(c, min_usd=GT_MIN_TRADE_USD, n=GT_TRADERS_PER_COIN):
     pool = c.get("main_pair")
     if not pool:
         return []
     url = (f"https://api.geckoterminal.com/api/v2/networks/solana/pools/{pool}/trades"
-           f"?trade_volume_in_usd_greater_than={GT_MIN_TRADE_USD}")
+           f"?trade_volume_in_usd_greater_than={min_usd}")
     try:
         rows = funnel.get(url).get("data") or []
     except Exception as e:
@@ -513,7 +519,20 @@ def traders_of(c):
         if w:
             vol[w] = vol.get(w, 0) + float(a.get("volume_in_usd") or 0)
     time.sleep(2.1)   # GeckoTerminal: 30 Abfragen pro Minute
-    return [w for w, _ in sorted(vol.items(), key=lambda x: -x[1])[:GT_TRADERS_PER_COIN]]
+    return [w for w, _ in sorted(vol.items(), key=lambda x: -x[1])[:n]]
+
+
+def small_coins():
+    """Kleine Coins aus der Radar-Liste des Fomo-Bots (bot_meta.json)."""
+    try:
+        with open(os.path.join(HERE, "bot_meta.json"), encoding="utf-8") as f:
+            pools = (json.load(f).get("radar") or {}).get("pools") or {}
+    except Exception:
+        return []
+    out = [{"addr": m, "sym": p.get("sym", "?"), "main_pair": p.get("pair"), "mc": p.get("mc") or 0,
+            "vol24": p.get("vol24") or 0} for m, p in pools.items()
+           if SMALL_MC_MIN <= (p.get("mc") or 0) <= SMALL_MC_MAX and p.get("pair")]
+    return sorted(out, key=lambda c: -c["vol24"])[:SMALL_COINS_PER_RUN]
 
 
 def collect(data):
@@ -538,6 +557,12 @@ def collect(data):
             w = data["wallets"].setdefault(addr, {"addr": addr, "first_seen": now(), "coins": {}, "status": "Neu"})
             w["coins"][c["addr"]] = how
         log(f"  ${c['sym']}: {len(holders)} Holder, {len(traders)} Trader")
+    small = small_coins()
+    log(f"Früh-Käufer: {len(small)} kleine Coins aus dem Radar")
+    for c in small:
+        for addr in traders_of(c, SMALL_MIN_TRADE_USD, SMALL_TRADERS_PER_COIN):
+            w = data["wallets"].setdefault(addr, {"addr": addr, "first_seen": now(), "coins": {}, "status": "Neu"})
+            w["coins"][c["addr"]] = "Früh-Käufer"
     # alte Gewinner vergessen
     cut = now() - WINNERS_KEEP_D * 86400
     data["winners"] = {k: v for k, v in data["winners"].items() if v["found"] >= cut}
@@ -557,7 +582,8 @@ def queue(data):
         if due:
             todo.append(w)
     # Trader zuerst: im 1. Lauf kamen alle Pool-Wallets aus den Tradern, fast keine aus den Holdern
-    todo.sort(key=lambda w: (w.get("status") != "Pool", "Trader" not in (w.get("coins") or {}).values(),
+    todo.sort(key=lambda w: (w.get("status") != "Pool",
+                             not ({"Trader", "Früh-Käufer"} & set((w.get("coins") or {}).values())),
                              -len(w.get("coins") or {}), w.get("checked") or 0))
     return todo
 
