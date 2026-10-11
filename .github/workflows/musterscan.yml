@@ -1,0 +1,33 @@
+name: Muster-Scan
+
+# Auf Knopfdruck: Coins unter 1 Mio. MC, die alle Regeln bestehen und zum Gewinner-Muster passen.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Scannen
+        env:
+          HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+        run: python3 pattern_scan.py
+      - name: Ergebnis speichern
+        run: |
+          git config user.name "fomo-bot"
+          git config user.email "fomo-bot@users.noreply.github.com"
+          mkdir -p /tmp/out/docs && cp pattern_scan.json /tmp/out/ && cp docs/muster.html /tmp/out/docs/
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp -r /tmp/out/. .
+            git add pattern_scan.json docs/muster.html
+            git commit -q -m "Muster-Scan $(date -u +%d.%m.%H:%M) UTC" || exit 0
+            if git push -q origin HEAD:main; then exit 0; fi
+            sleep 15
+          done
+          exit 1
