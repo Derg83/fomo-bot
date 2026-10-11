@@ -1,0 +1,31 @@
+name: Coin-Check
+
+# Auf Knopfdruck: Wie haben sich alle Coins seit dem ersten Auftauchen entwickelt (Peak und jetzt)?
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Coins prüfen
+        run: python3 coin_check.py bots
+      - name: Ergebnis speichern
+        run: |
+          git config user.name "fomo-bot"
+          git config user.email "fomo-bot@users.noreply.github.com"
+          mkdir -p /tmp/out/docs && cp coin_check.json /tmp/out/ && cp docs/coin_check.html /tmp/out/docs/
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp -r /tmp/out/. .
+            git add coin_check.json docs/coin_check.html
+            git commit -q -m "Coin-Check $(date -u +%d.%m.%H:%M) UTC" || exit 0
+            if git push -q origin HEAD:main; then exit 0; fi
+            sleep 15
+          done
+          exit 1
