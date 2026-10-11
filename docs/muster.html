@@ -1,0 +1,40 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Muster-Scan</title><style>
+:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;--d:#13897c;
+--good:#1f8a5b;--bad:#c4413b;--chip:#eef1f5;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--fg:#e8eaed;--muted:#99a1ad;--line:#2a3039;
+--a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--d:#3cc7b6;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:16px}
+h1{font-size:22px;margin:0}h2{font-size:17px;margin:28px 0 10px}h3{font-size:15px;margin:0 0 8px}
+.muted{color:var(--muted)}.small{font-size:13px}.stale{color:var(--bad);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-variant-numeric:tabular-nums;margin-top:6px}
+.kv span:nth-child(odd){color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:11px}.chart .grid line{stroke:var(--line)}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:13px}
+code{font-size:12px;word-break:break-all;color:var(--muted)}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:1px 9px;font-size:12px;margin:2px 4px 2px 0}
+.funnel div{display:flex;align-items:center;gap:10px;margin:4px 0}
+.funnel b{width:80px;font-weight:600;font-size:13px}.funnel i{display:block;height:18px;border-radius:4px;background:var(--a);opacity:.85}
+.run{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 16px}
+.btn{font:inherit;font-weight:600;border:0;border-radius:8px;padding:8px 14px;background:var(--a);color:#fff;cursor:pointer}
+.btn:focus-visible,.link:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.link{font:inherit;font-size:13px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+#tokform{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+#tokform[hidden]{display:none}
+#tokform input{font:inherit;flex:1 1 220px;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
+a{color:var(--a)}footer{margin-top:32px;color:var(--muted);font-size:13px}
+</style></head>
+<body><div class="wrap"><header><h1>Muster-Scan</h1><a class="small" href="index.html">← zum Bot-Dashboard</a></header>
+<p class="small muted">Stand 11.10.2026 14:29 Uhr · Coins unter 1 Mio. MC, die alle Trichter-Regeln bestehen,
+sortiert danach, wie gut sie zum Muster der bisherigen Gewinner passen. Kein Kaufsignal.</p>
+<div class="grid"><div class="card"><h3>$ABU · 6/6</h3><code>6hTLdzZaaCjmqtn7RtaEMQsCbXT5Pg8q76tRViEGpump</code><ul class="small"><li>✅ MC 573k (150k–1 Mio.)</li><li>✅ Alter 8.6 Tage (1,5–14)</li><li>✅ Liquidität 14 % der MC (≥10 %)</li><li>✅ 24 h +55 % (kein Pump)</li><li>✅ 1 h -1 % (ruhig)</li><li>✅ Volumen 37 % der MC (≥30 %)</li><li>⚠️ 10 bezahlte Boosts</li></ul><span class="small"><a href="https://dexscreener.com/solana/6hTLdzZaaCjmqtn7RtaEMQsCbXT5Pg8q76tRViEGpump">Chart</a> · <a href="https://rugcheck.xyz/tokens/6hTLdzZaaCjmqtn7RtaEMQsCbXT5Pg8q76tRViEGpump">RugCheck</a> · <a href="https://trench.bot/bundles/6hTLdzZaaCjmqtn7RtaEMQsCbXT5Pg8q76tRViEGpump">Trench</a> · <a href="https://app.bubblemaps.io/sol/token/6hTLdzZaaCjmqtn7RtaEMQsCbXT5Pg8q76tRViEGpump">Bubblemaps</a></span></div><div class="card"><h3>$SLOPCORE · 5/6</h3><code>EkFRff9a2jKztJHML1LG9FRmEkPJDR6XAYp3uCPdpump</code><ul class="small"><li>✅ MC 627k (150k–1 Mio.)</li><li>✅ Alter 13.5 Tage (1,5–14)</li><li>✅ Liquidität 14 % der MC (≥10 %)</li><li>✅ 24 h +63 % (kein Pump)</li><li>❌ 1 h -25 % (ruhig)</li><li>✅ Volumen 84 % der MC (≥30 %)</li></ul><span class="small"><a href="https://dexscreener.com/solana/EkFRff9a2jKztJHML1LG9FRmEkPJDR6XAYp3uCPdpump">Chart</a> · <a href="https://rugcheck.xyz/tokens/EkFRff9a2jKztJHML1LG9FRmEkPJDR6XAYp3uCPdpump">RugCheck</a> · <a href="https://trench.bot/bundles/EkFRff9a2jKztJHML1LG9FRmEkPJDR6XAYp3uCPdpump">Trench</a> · <a href="https://app.bubblemaps.io/sol/token/EkFRff9a2jKztJHML1LG9FRmEkPJDR6XAYp3uCPdpump">Bubblemaps</a></span></div><div class="card"><h3>$SIB · 3/6</h3><code>3HKKrXhDvGFWPdkALw3KofESZexsEx9opGtq37n9pump</code><ul class="small"><li>❌ MC 149k (150k–1 Mio.)</li><li>❌ Alter 1.5 Tage (1,5–14)</li><li>✅ Liquidität 28 % der MC (≥10 %)</li><li>❌ 24 h -75 % (kein Pump)</li><li>✅ 1 h -7 % (ruhig)</li><li>✅ Volumen 297 % der MC (≥30 %)</li></ul><span class="small"><a href="https://dexscreener.com/solana/3HKKrXhDvGFWPdkALw3KofESZexsEx9opGtq37n9pump">Chart</a> · <a href="https://rugcheck.xyz/tokens/3HKKrXhDvGFWPdkALw3KofESZexsEx9opGtq37n9pump">RugCheck</a> · <a href="https://trench.bot/bundles/3HKKrXhDvGFWPdkALw3KofESZexsEx9opGtq37n9pump">Trench</a> · <a href="https://app.bubblemaps.io/sol/token/3HKKrXhDvGFWPdkALw3KofESZexsEx9opGtq37n9pump">Bubblemaps</a></span></div></div></div></body></html>
