@@ -37,6 +37,10 @@ BOTS = {
     "tempo":  {"label": "Tempo",           "min_age_days": 0,
                "take_profit": 0.10, "stop_loss": 0.08, "max_open": 5, "max_hold_h": 6,
                "cooldown_h": 4, "entry_h1_min": -20, "entry_h1_max": 10},
+    # Gewinner laufen lassen: Hälfte bei +15 % verkaufen, Rest bis 10 % unter dem Hoch
+    "trail":  {"label": "Trailing",        "min_age_days": 0,
+               "take_profit": 99, "stop_loss": 0.10, "max_hold_h": 72,
+               "partial_tp": 0.15, "partial_part": 0.5, "trail_dist": 0.10},
 }
 
 START_BALANCE = 30.0        # Papier-Startkapital pro Bot in $
@@ -58,10 +62,17 @@ ENTRY_MAX_24H = 400         # heute nicht schon +400 % gelaufen
 SCAN_EVERY_MIN = 20         # Trichter-Intervall
 CHECK_EVERY_SEC = 60        # Kurs-Check-Intervall in der Dauerschleife
 COOLDOWN_H = 24             # denselben Coin frühestens nach 24 h wieder kaufen
+LOSS_COOLDOWN_H = 48        # nach einem Verlust: Coin 48 h gesperrt (gilt für alle Bots)
+PARTIAL_TP = 0              # Teilverkauf ab +x (0 = aus)
+PARTIAL_PART = 0.5          # so viel beim Teilverkauf verkaufen
+TRAIL_DIST = 0              # nach dem Teilverkauf: raus, wenn x unter dem Hoch (0 = aus)
+HISTORY_EVERY_MIN = 10      # Konto-Stand fürs Diagramm alle 10 Min. merken
+AFTER_H = (1, 6, 24)        # Kurs so viele Stunden nach dem Verkauf mitschreiben (für Auswertungen)
 HISTORY_MAX = 3000          # so viele Konto-Stände fürs Diagramm merken
 # =============================================================
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+LOSERS = {}   # CA -> gesperrt bis (gemeinsam für alle Bots, gespeichert in bot_meta.json)
 
 
 def P(name, key):
@@ -176,7 +187,7 @@ def update_watch(name, state, candidates):
         a = c["addr"]
         if c["age_d"] < BOTS[name]["min_age_days"]:
             continue
-        if a in state["open"] or state["cooldown"].get(a, 0) > now:
+        if a in state["open"] or state["cooldown"].get(a, 0) > now or LOSERS.get(a, 0) > now:
             continue
         state["watch"][a] = {"sym": c["sym"], "age_d": round(c["age_d"], 1), "mc": c["mc"]}
 
@@ -206,24 +217,32 @@ def try_entries(name, state, prices):
         state["open"][a] = {"sym": w["sym"], "entry_price": q["price"], "qty": stake / fill,
                             "stake": stake, "entry_time": time.time(), "entry_liq": q["liq"],
                             "entry_mc": q["mc"], "age_d": w.get("age_d"), "last_seen": time.time(),
-                            "last_price": q["price"]}
+                            "last_price": q["price"], "peak": q["price"], "trough": q["price"],
+                            "realized": 0.0, "partial": False}
         del state["watch"][a]
         log(f"[{name}] KAUF (Papier) ${w['sym']} für {stake:.2f} $ bei MC {funnel.fmt(q['mc'])}  CA: {a}")
 
 
 def close(name, state, a, price, reason):
     p = state["open"].pop(a)
-    proceeds = p["qty"] * price * (1 - FEE_SLIPPAGE)
-    state["cash"] += proceeds
+    proceeds = p["qty"] * price * (1 - FEE_SLIPPAGE) + p.get("realized", 0.0)
+    state["cash"] += p["qty"] * price * (1 - FEE_SLIPPAGE)
     pnl = proceeds - p["stake"]
     trade = {"sym": p["sym"], "addr": a, "entry_time": p["entry_time"], "exit_time": time.time(),
              "entry_price": p["entry_price"], "exit_price": price, "stake": round(p["stake"], 4),
              "proceeds": round(proceeds, 4), "pnl": round(pnl, 4),
              "pnl_pct": round(pnl / p["stake"] * 100, 2), "reason": reason,
              "hold_h": round((time.time() - p["entry_time"]) / 3600, 2), "age_d": p.get("age_d"),
-             "entry_mc": p.get("entry_mc")}
+             "entry_mc": p.get("entry_mc"),
+             # bester / schlechtester Stand während des Trades (für Auswertungen anderer TP/Stop-Werte)
+             "max_pct": round((p.get("peak", price) / p["entry_price"] - 1) * 100, 2),
+             "min_pct": round((p.get("trough", price) / p["entry_price"] - 1) * 100, 2),
+             "partial": p.get("partial", False), "after": {}}
     state["closed"].append(trade)
-    state["cooldown"][a] = time.time() + P(name, "cooldown_h") * 3600
+    cd = LOSS_COOLDOWN_H if pnl < 0 else P(name, "cooldown_h")
+    state["cooldown"][a] = max(state["cooldown"].get(a, 0), time.time() + cd * 3600)
+    if pnl < 0:   # Verlierer für ALLE Bots sperren
+        LOSERS[a] = time.time() + LOSS_COOLDOWN_H * 3600
     write_journal(name, trade)
     log(f"[{name}] VERKAUF (Papier) ${p['sym']}: {reason} -> {pnl:+.2f} $ ({trade['pnl_pct']:+.1f} %)  CA: {a}")
 
@@ -237,9 +256,24 @@ def manage_exits(name, state, prices):
                 close(name, state, a, 0.0, "keine Kursdaten mehr (tot/gerugged)")
             continue
         p["last_seen"], p["last_price"] = now, q["price"]
+        p["peak"] = max(p.get("peak", p["entry_price"]), q["price"])
+        p["trough"] = min(p.get("trough", p["entry_price"]), q["price"])
         change = q["price"] / p["entry_price"] - 1
+        ptp, tdist = P(name, "partial_tp"), P(name, "trail_dist")
+        if ptp and not p.get("partial") and change >= ptp and q["liq"] >= p["entry_liq"] * (1 - P(name, "liq_drop_exit")):
+            sell = p["qty"] * P(name, "partial_part")
+            got = sell * q["price"] * (1 - FEE_SLIPPAGE)
+            p["qty"] -= sell
+            p["realized"] = p.get("realized", 0.0) + got
+            state["cash"] += got
+            p["partial"] = True
+            log(f"[{name}] TEILVERKAUF (Papier) ${p['sym']} bei +{change * 100:.0f} %  CA: {a}")
+            continue
         if q["liq"] < p["entry_liq"] * (1 - P(name, "liq_drop_exit")):
             close(name, state, a, q["price"], "Liquidität abgezogen (Rug-Verdacht)")
+        elif p.get("partial") and tdist and q["price"] <= p["peak"] * (1 - tdist):
+            close(name, state, a, q["price"],
+                  f"Trailing ({(p['peak'] / p['entry_price'] - 1) * 100:+.0f} % Hoch, raus bei {change * 100:+.0f} %)")
         elif change >= P(name, "take_profit"):
             close(name, state, a, q["price"], f"Take-Profit (+{change * 100:.0f} %)")
         elif change <= -P(name, "stop_loss"):
@@ -256,17 +290,51 @@ def cycle(states, meta):
             for n, s in states.items():
                 update_watch(n, s, candidates)
             meta["last_scan"] = time.time()
+    now = time.time()
+    LOSERS.clear()
+    LOSERS.update({a: t for a, t in (meta.get("losers") or {}).items() if t > now})
     addrs = set()
     for s in states.values():
         addrs |= set(s["open"]) | set(s["watch"])
+        addrs |= {t["addr"] for t in s["closed"] if pending_after(t, now)}
     prices = get_prices(addrs) if addrs else {}
     for n, s in states.items():
         manage_exits(n, s, prices)
+        # Verlierer, die ein anderer Bot gerade gesperrt hat, nicht mehr kaufen
+        s["watch"] = {a: w for a, w in s["watch"].items() if LOSERS.get(a, 0) <= now}
         try_entries(n, s, prices)
+        track_after(s, prices, now)
+    meta["losers"] = dict(LOSERS)
     meta["last_run"] = time.time()
-    meta["history"].append([int(time.time())] + [round(equity(states[n], prices), 4) for n in BOTS])
-    meta["history"] = meta["history"][-HISTORY_MAX:]
+    hist = meta["history"]
+    if not hist or time.time() - hist[-1][0] >= HISTORY_EVERY_MIN * 60 - 30:
+        hist.append([int(time.time())] + [round(equity(states[n], prices), 4) for n in BOTS])
+    meta["history"] = hist[-HISTORY_MAX:]
     return prices
+
+
+def pending_after(t, now):
+    """Wird für diesen Trade noch ein Kurs nach dem Verkauf gebraucht?"""
+    if "after" not in t:
+        return False
+    return any(str(h) not in t["after"] and now - t["exit_time"] >= h * 3600 - 120 for h in AFTER_H) \
+        and now - t["exit_time"] <= max(AFTER_H) * 3600 + 7200
+
+
+def track_after(state, prices, now):
+    """Kurs 1 / 6 / 24 h nach dem Verkauf mitschreiben: War der Ausstieg zu früh oder genau richtig?"""
+    for t in state["closed"]:
+        if "after" not in t or not t.get("exit_price"):
+            continue
+        q = prices.get(t["addr"])
+        for h in AFTER_H:
+            k = str(h)
+            if k in t["after"] or now - t["exit_time"] < h * 3600:
+                continue
+            if q:
+                t["after"][k] = round((q["price"] / t["exit_price"] - 1) * 100, 1)
+            elif now - t["exit_time"] > h * 3600 + 7200:
+                t["after"][k] = None     # keine Kursdaten mehr (Coin tot)
 
 
 # ---------------------------------------------------------------- Journal
@@ -328,10 +396,10 @@ def report(states):
 
 # ---------------------------------------------------------------- Dashboard
 CSS = """
-:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;
+:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;--d:#13897c;
 --good:#1f8a5b;--bad:#c4413b;--chip:#eef1f5;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--fg:#e8eaed;--muted:#99a1ad;--line:#2a3039;
---a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
+--a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--d:#3cc7b6;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 .wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
 header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:16px}
@@ -436,7 +504,7 @@ def equity_chart(meta):
     def Y(v):
         return T + (hi - v) / (hi - lo) * (H - T - B)
 
-    parts = [f'<svg class="chart" viewBox="0 0 {W} {H}" role="img" aria-label="Kontoverlauf beider Bots">']
+    parts = [f'<svg class="chart" viewBox="0 0 {W} {H}" role="img" aria-label="Kontoverlauf aller Bots">']
     parts.append('<g class="grid">')
     drawn = []
     for v in (START_BALANCE, hi - pad, lo + pad):
@@ -448,12 +516,12 @@ def equity_chart(meta):
     parts.append('</g>')
     parts.append(f'<text x="{L}" y="{H - 6}">{berlin(x0):%d.%m. %H:%M}</text>'
                  f'<text x="{W - R}" y="{H - 6}" text-anchor="end">{berlin(x1):%d.%m. %H:%M}</text>')
-    colors = ["var(--a)", "var(--b)", "var(--c)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)"]
     for i, _ in enumerate(BOTS):
         pts = " ".join(f"{X(h[0]):.1f},{Y(h[i + 1]):.1f}" for h in hist if len(h) > i + 1)
-        parts.append(f'<polyline fill="none" stroke="{colors[i % 3]}" stroke-width="2" points="{pts}"/>')
+        parts.append(f'<polyline fill="none" stroke="{colors[i % 4]}" stroke-width="2" points="{pts}"/>')
         last = hist[-1]
-        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 3]}"/>')
+        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 4]}"/>')
     parts.append('</svg>')
     return "".join(parts)
 
@@ -464,22 +532,41 @@ def coin_links(a):
             f'<a href="https://trench.bot/bundles/{a}">Trench</a>')
 
 
+def trade_extra(t):
+    """Hoch/Tief während des Trades und Kurs nach dem Verkauf (nur bei neuen Trades vorhanden)."""
+    bits = []
+    if "max_pct" in t:
+        bits.append(f'Hoch {t["max_pct"]:+.0f} % · Tief {t["min_pct"]:+.0f} %')
+    aft = [f'{h} h danach {t["after"][str(h)]:+.0f} %' for h in AFTER_H
+           if t.get("after", {}).get(str(h)) is not None]
+    if aft:
+        bits.append(" · ".join(aft))
+    return "".join(f'<br><span class="muted">{b}</span>' for b in bits)
+
+
+def exit_rule(n):
+    if P(n, "partial_tp"):
+        return (f'{P(n, "partial_part") * 100:.0f} % bei +{P(n, "partial_tp") * 100:.0f} %, '
+                f'Rest bis {P(n, "trail_dist") * 100:.0f} % unter Hoch')
+    return f'TP +{P(n, "take_profit") * 100:.0f} %'
+
+
 def write_dashboard(states, meta, prices):
     now = time.time()
-    colors = ["var(--a)", "var(--b)", "var(--c)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)"]
     cards = []
     for i, (n, s) in enumerate(states.items()):
         x = summary(s, prices)
         rate = f"{x['rate']:.0f} %" if x["rate"] is not None else "–"
         cards.append(
-            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 3]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
+            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 4]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
             f'<div class="big">{x["equity"]:.2f} $</div><div>{pct(x["ret"])} seit Start ({START_BALANCE:.0f} $)</div>'
             f'<div class="kv"><span>Trades</span><span>{x["n"]}</span>'
             f'<span>Trefferquote</span><span>{rate} <span class="muted small">(Ziel über 56 %)</span></span>'
             f'<span>Ø Gewinner</span><span>{pct(x["avg_win"])}</span>'
             f'<span>Ø Verlierer</span><span>{pct(x["avg_loss"])}</span>'
             f'<span>Offen</span><span>{x["open"]} von {P(n, "max_open")}</span></div>'
-            f'<p class="small muted">TP +{P(n, "take_profit") * 100:.0f} % · Stop -{P(n, "stop_loss") * 100:.0f} % · '
+            f'<p class="small muted">{exit_rule(n)} · Stop -{P(n, "stop_loss") * 100:.0f} % · '
             f'max. {P(n, "max_hold_h")} h · ab {BOTS[n]["min_age_days"]} Tagen</p></div>')
 
     open_rows, closed_rows, watch_html = [], [], []
@@ -495,7 +582,7 @@ def write_dashboard(states, meta, prices):
             closed_rows.append((t["exit_time"],
                 f'<tr><td>{html.escape(BOTS[n]["label"])}</td><td><b>${html.escape(t["sym"])}</b><br><code>{t["addr"]}</code></td>'
                 f'<td>{berlin(t["exit_time"]):%d.%m. %H:%M}</td><td>{pct(t["pnl_pct"])}<br>'
-                f'<span class="small muted">{t["pnl"]:+.2f} $</span></td><td class="small">{html.escape(t["reason"])}</td></tr>'))
+                f'<span class="small muted">{t["pnl"]:+.2f} $</span></td><td class="small">{html.escape(t["reason"])}{trade_extra(t)}</td></tr>'))
         chips = "".join(f'<div><span class="chip">${html.escape(w["sym"])}</span>'
                         f'<span class="small muted">{w.get("age_d", "?")} Tage · MC {funnel.fmt(w.get("mc") or 0)}</span>'
                         f'<br><code>{a}</code></div>' for a, w in s["watch"].items())

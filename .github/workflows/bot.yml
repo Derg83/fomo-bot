@@ -1,8 +1,8 @@
 name: Fomo-Bot
 
-# Ein Lauf macht ca. 5,5 Stunden lang alle 10 Minuten eine Runde
-# und startet am Ende selbst den naechsten Lauf. Der Zeitplan unten
-# ist nur Reserve, falls die Kette mal abreisst.
+# Ein Lauf macht ca. 5,5 Stunden lang JEDE MINUTE eine Runde (Kurse, Stops, Einstiege),
+# der Trichter selbst läuft nur alle 20 Minuten. Gespeichert wird alle 10 Minuten.
+# Am Ende startet der Lauf selbst den nächsten. Der Zeitplan unten ist nur Reserve.
 on:
   schedule:
     - cron: "7 * * * *"
@@ -23,27 +23,32 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Runden alle 10 Minuten
+      - name: Runden jede Minute
         run: |
           git config user.name "fomo-bot"
           git config user.email "fomo-bot@users.noreply.github.com"
-          for i in $(seq 1 33); do
-            start=$(date +%s)
-            git fetch -q origin main && git reset -q --hard origin/main
-            python3 fomo_bot.py once || echo "Runde $i mit Fehler"
+          save() {
             git add -A
-            if git commit -q -m "Bot-Runde $(date -u +%H:%M) UTC"; then
-              if ! { git pull --rebase -q && git push -q; }; then
-                echo "Push fehlgeschlagen, Runde verworfen"
-                git rebase --abort 2>/dev/null || true
-                git fetch -q origin main && git reset -q --hard origin/main
-              fi
+            git commit -q -m "Bot-Runde $(date -u +%H:%M) UTC" || return 0
+            # bei Konflikten gewinnt der lokale Bot-Stand; neue Code-Versionen kommen trotzdem mit
+            if git pull --rebase -X theirs -q origin main && git push -q origin HEAD:main; then
+              return 0
             fi
-            if [ "$i" -lt 33 ]; then
-              wait=$(( 600 - ( $(date +%s) - start ) ))
-              if [ "$wait" -gt 0 ]; then sleep "$wait"; fi
-            fi
+            git rebase --abort 2>/dev/null || true
+            echo "Speichern fehlgeschlagen, nächster Versuch in 10 Min."
+          }
+          git pull -q origin main || true
+          ende=$(( $(date +%s) + 330 * 60 ))
+          i=0
+          while [ "$(date +%s)" -lt "$ende" ]; do
+            start=$(date +%s)
+            i=$((i + 1))
+            timeout 300 python3 fomo_bot.py once || echo "Runde $i mit Fehler"
+            if [ $((i % 10)) -eq 0 ]; then save; fi
+            wait=$(( 60 - ( $(date +%s) - start ) ))
+            if [ "$wait" -gt 0 ]; then sleep "$wait"; fi
           done
+          save
 
       - name: Naechsten Lauf starten
         if: always()

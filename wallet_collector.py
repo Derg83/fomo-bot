@@ -17,6 +17,7 @@ Nur Daten auslesen. Kein Handel, kein Schlüssel, keine Wallet nötig.
 """
 
 import csv
+import glob
 import html
 import json
 import os
@@ -58,9 +59,12 @@ SNIPER_SHARE = 0.5            # ab 50 % Sniper-Käufe = nicht nachmachbar
 FUNDER_MAX_PAGES = 5          # Geldquelle: höchstens 5 x 1000 Signaturen zurückblättern
 EXCHANGE_FUNDS = 5            # eine Geldquelle, die mehr als 5 unserer Wallets versorgt = Börse, keine Gruppe
 
+WHALE_SOL = 20                # Ø-Einsatz ab 20 SOL pro Trade = Wal (bewegt den Kurs selbst)
+BOT_WINNERS_D = 7             # Coins, mit denen unsere Papier-Bots in den letzten 7 Tagen Gewinn gemacht haben
+
 RESCORE_D = 3                # Pool-Wallets alle 3 Tage neu bewerten
 RECHECK_OUT_D = 14            # aussortierte Wallets frühestens nach 14 Tagen nochmal
-MAX_SCORE_PER_RUN = 120       # so viele Wallets pro Lauf auslesen
+MAX_SCORE_PER_RUN = 200       # so viele Wallets pro Lauf auslesen (~22.000 Credits)
 CREDITS_MONTH_MAX = 800_000   # Helius-Gratis-Tarif hat 1 Mio. Credits/Monat, Rest als Puffer
 RPC_PAUSE = 0.12              # Pause zwischen Abfragen (Gratis-Tarif: 10 pro Sekunde)
 # =====================================================================
@@ -386,6 +390,8 @@ def score(closed, sigs, data):
     s["win10"] = round(sum(1 for c in last if c["pnl"] > 0) / len(last), 2) if last else None
     s["roi10"] = round(s["pnl10"] / out * 100, 1) if out else None
     s["best10"] = round(max((c["pnl"] for c in last), default=0), 3)
+    s["avg_sol"] = round(out / len(last), 2) if last else None
+    s["whale"] = bool(s["avg_sol"] and s["avg_sol"] >= WHALE_SOL)
     # Ohne den größten Treffer noch im Plus? (ein 50x und neun Verluste = Glück)
     s["pnl10_ohne_top"] = round(s["pnl10"] - max(s["best10"], 0), 3)
 
@@ -428,18 +434,40 @@ def evaluate(rpc, w, data):
 
 
 # ---------------------------------------------------------------- Kandidaten sammeln
+def bot_winners():
+    """Coins, die durch den Trichter kamen und mit denen ein Papier-Bot Gewinn gemacht hat."""
+    out, cut = set(), now() - BOT_WINNERS_D * 86400
+    for path in glob.glob(os.path.join(HERE, "bot_state_*.json")):
+        try:
+            with open(path, encoding="utf-8") as f:
+                st = json.load(f)
+        except Exception:
+            continue
+        for t in st.get("closed") or []:
+            if t.get("pnl", 0) > 0 and t.get("exit_time", 0) >= cut:
+                out.add(t["addr"])
+    return out
+
+
 def find_winners(data):
     log("Suche Gewinner-Coins ...")
     src = funnel.collect_candidates()
+    from_bots = bot_winners()
+    for a in from_bots:
+        src.setdefault(a, set()).add("bot")
     coins = funnel.market_data(src)
     fresh = []
     for c in coins:
         age_d = c["age_h"] / 24
         ratio = c["liq"] / c["mc"] if c["mc"] else 0
-        if (c["mc"] >= WIN_MIN_MC and WIN_MIN_AGE_D <= age_d <= WIN_MAX_AGE_D
+        c["from_bot"] = c["addr"] in from_bots
+        # Bot-Gewinner haben den Trichter schon bestanden -> keine MC-/Mindestalter-Hürde
+        big_enough = c["from_bot"] or (c["mc"] >= WIN_MIN_MC and age_d >= WIN_MIN_AGE_D)
+        if (big_enough and age_d <= WIN_MAX_AGE_D
                 and ratio >= WIN_MIN_LIQ_RATIO and c["addr"] not in data["winners"]):
             fresh.append(c)
-    fresh.sort(key=lambda c: c["mc"], reverse=True)
+    fresh.sort(key=lambda c: (c["from_bot"], c["mc"]), reverse=True)
+    log(f"  davon aus den Papier-Bots: {sum(c['from_bot'] for c in fresh)}")
     log(f"  {len(coins)} Coins geprüft, {len(fresh)} neue Gewinner, nehme {min(len(fresh), NEW_WINNERS_PER_RUN)}")
     return fresh[:NEW_WINNERS_PER_RUN]
 
@@ -504,6 +532,7 @@ def collect(data):
             continue
         traders = traders_of(c)
         data["winners"][c["addr"]] = {"sym": c["sym"], "mc": c["mc"], "age_d": round(c["age_h"] / 24, 1),
+                                      "src": "Papier-Bot" if c.get("from_bot") else "Trending",
                                       "found": now(), "holders": len(holders), "traders": len(traders)}
         for addr, how in [(h, "Holder") for h in holders] + [(t, "Trader") for t in traders]:
             w = data["wallets"].setdefault(addr, {"addr": addr, "first_seen": now(), "coins": {}, "status": "Neu"})
@@ -565,7 +594,7 @@ def de(x, d=2):
 def write_csv(pool, grp):
     fields = ["Wallet", "Gewinner-Coins", "Abgeschl. Trades", f"Gewinn letzte {LAST_N} (SOL)",
               "Ohne größten Treffer (SOL)", "Treffer %", "ROI %", "Haltedauer Median (Min.)",
-              "Trades/Tag", "Sniper-Anteil %", "Gleiche Geldquelle (Gruppe)", "Geprüft"]
+              "Trades/Tag", "Ø Einsatz (SOL)", "Wal", "Sniper-Anteil %", "Gleiche Geldquelle (Gruppe)", "Geprüft"]
     with open(CSV_FILE, "w", newline="", encoding="utf-8-sig") as f:
         wr = csv.writer(f, delimiter=";")
         wr.writerow(fields)
@@ -573,6 +602,7 @@ def write_csv(pool, grp):
             wr.writerow([w["addr"], len(w.get("coins") or {}), w.get("closed"), de(w.get("pnl10"), 3),
                          de(w.get("pnl10_ohne_top"), 3), de((w.get("win10") or 0) * 100, 0), de(w.get("roi10"), 1),
                          de(w.get("hold_med_min"), 1), de(w.get("tx_day"), 1),
+                         de(w.get("avg_sol"), 2), "ja" if w.get("whale") else "",
                          de((w.get("sniper_share") or 0) * 100, 0), grp.get(w["addr"], ""),
                          time.strftime("%d.%m.%Y %H:%M", time.localtime(w.get("checked") or 0))])
 
@@ -580,6 +610,10 @@ def write_csv(pool, grp):
 def write_page(data):
     from fomo_bot import CSS, berlin, pct
     ws = list(data["wallets"].values())
+    for w in ws:   # ältere Einträge: Ø-Einsatz aus den gespeicherten letzten Trades nachrechnen
+        if "avg_sol" not in w and w.get("last10"):
+            w["avg_sol"] = round(sum(c["sol_out"] for c in w["last10"]) / len(w["last10"]), 2)
+            w["whale"] = w["avg_sol"] >= WHALE_SOL
     # Oben: Wallets, die auch ohne ihren größten Treffer im Plus sind, dann nach ROI
     pool = sorted([w for w in ws if w.get("status") == "Pool"],
                   key=lambda w: ((w.get("pnl10_ohne_top") or 0) > 0, w.get("roi10") or 0), reverse=True)
@@ -600,13 +634,15 @@ def write_page(data):
             flags.append(f'<span class="chip">Gruppe {g}</span>')
         if (w.get("pnl10_ohne_top") or 0) <= 0:
             flags.append('<span class="chip">nur 1 großer Treffer</span>')
+        if w.get("whale"):
+            flags.append(f'<span class="chip">Wal · Ø {w.get("avg_sol")} SOL</span>')
         rows.append(
             f'<tr><td><code>{a}</code><br><span class="small"><a href="https://solscan.io/account/{a}">Solscan</a> · '
             f'<a href="https://gmgn.ai/sol/address/{a}">GMGN</a></span><br>{"".join(flags)}</td>'
             f'<td>{len(w.get("coins") or {})}</td><td>{w.get("closed")}</td>'
             f'<td>{(w.get("pnl10") or 0):+.2f} SOL<br><span class="small muted">ohne Top-Trade {(w.get("pnl10_ohne_top") or 0):+.2f}</span></td>'
             f'<td>{(w.get("win10") or 0) * 100:.0f} %</td><td>{pct(w.get("roi10"))}</td>'
-            f'<td>{w.get("hold_med_min") or "–"} Min.</td><td>{w.get("tx_day")}</td></tr>')
+            f'<td>{w.get("hold_med_min") or "–"} Min.</td><td>{w.get("avg_sol") if w.get("avg_sol") is not None else "–"} SOL</td><td>{w.get("tx_day")}</td></tr>')
 
     out_rows = []
     for w in sorted([w for w in ws if w.get("status") not in ("Pool", "Neu")],
@@ -616,7 +652,7 @@ def write_page(data):
 
     win_rows = "".join(
         f'<tr><td><b>${html.escape(v["sym"])}</b><br><code>{k}</code></td><td>{funnel.fmt(v["mc"])}</td>'
-        f'<td>{v["age_d"]} Tage</td><td>{v["holders"]} / {v["traders"]}</td></tr>'
+        f'<td>{v["age_d"]} Tage</td><td>{v["holders"]} / {v["traders"]}</td><td class="small">{v.get("src", "Trending")}</td></tr>'
         for k, v in sorted(data["winners"].items(), key=lambda x: -x[1]["found"])[:30])
 
     month = time.strftime("%Y-%m")
@@ -633,11 +669,11 @@ def write_page(data):
 <p class="small muted">Pool = mindestens {MIN_CLOSED} abgeschlossene Trades, letzte {LAST_N} im Plus, kein Bot, kein Sniper.
 Gleiche „Gruppe“ = gleiche Geldquelle, zählt beim Anker nur einmal.</p></div>
 <h2>Pool ({len(pool)})</h2>
-<div class="card scroll">{'<table><tr><th>Wallet</th><th>Gewinner-Coins</th><th>Trades</th><th>Letzte ' + str(LAST_N) + '</th><th>Treffer</th><th>ROI</th><th>Haltedauer</th><th>Tx/Tag</th></tr>' + ''.join(rows) + '</table>' if rows else '<p class="muted">Noch keine Wallet hat alle Prüfungen bestanden.</p>'}</div>
+<div class="card scroll">{'<table><tr><th>Wallet</th><th>Gewinner-Coins</th><th>Trades</th><th>Letzte ' + str(LAST_N) + '</th><th>Treffer</th><th>ROI</th><th>Haltedauer</th><th>Ø Einsatz</th><th>Tx/Tag</th></tr>' + ''.join(rows) + '</table>' if rows else '<p class="muted">Noch keine Wallet hat alle Prüfungen bestanden.</p>'}</div>
 <h2>Zuletzt aussortiert</h2>
 <div class="card scroll">{'<table><tr><th>Wallet</th><th>Status</th><th>Grund</th></tr>' + ''.join(out_rows) + '</table>' if out_rows else '<p class="muted">Noch nichts.</p>'}</div>
 <h2>Gewinner-Coins (Quelle)</h2>
-<div class="card scroll">{'<table><tr><th>Coin</th><th>MC beim Fund</th><th>Alter</th><th>Holder / Trader</th></tr>' + win_rows + '</table>' if win_rows else '<p class="muted">Noch keine.</p>'}</div>
+<div class="card scroll">{'<table><tr><th>Coin</th><th>MC beim Fund</th><th>Alter</th><th>Holder / Trader</th><th>Quelle</th></tr>' + win_rows + '</table>' if win_rows else '<p class="muted">Noch keine.</p>'}</div>
 <footer>Nur ausgelesene Chain-Daten, kein Handel. Gewinne in SOL inkl. Gebühren. Trades, deren Kauf vor dem
 ausgewerteten Zeitraum lag oder deren Coins weggeschickt wurden, zählen nicht. Kein Kaufsignal.</footer></div></body></html>"""
     os.makedirs(os.path.dirname(PAGE), exist_ok=True)
