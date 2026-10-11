@@ -3,7 +3,13 @@ name: Rueckblick-Daten
 # Auf Knopfdruck: Kursverläufe von ein paar Hundert Memecoins sammeln (für das Reverse Engineering).
 # Die Daten landen auf dem Branch "rueckblick-daten", nicht auf main.
 on:
+  schedule:
+    - cron: "23 */3 * * *"     # alle 3 Stunden weitersammeln (GeckoTerminal bremst GitHub stark)
   workflow_dispatch:
+
+concurrency:
+  group: rueckblick-daten
+  cancel-in-progress: false
 
 permissions:
   contents: write
