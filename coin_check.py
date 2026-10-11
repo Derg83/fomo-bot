@@ -20,6 +20,7 @@ import time
 import memecoin_funnel as funnel
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+MIN_LIQ = 1000      # unter 1.000 $ Liquidität ist ein Coin praktisch tot
 IN_FILE = os.path.join(HERE, "coin_check_input.json")
 OUT_FILE = os.path.join(HERE, "coin_check.json")
 PAGE = os.path.join(HERE, "docs", "coin_check.html")
@@ -58,10 +59,17 @@ def main_pair(addr):
     return max(pairs, key=lambda p: (p.get("liquidity") or {}).get("usd") or 0)
 
 
-def candles(pool):
+def candles(pool, token):
     url = (f"https://api.geckoterminal.com/api/v2/networks/solana/pools/{pool}/ohlcv/hour"
-           f"?aggregate=1&limit=1000&currency=usd&token=base")
-    data = funnel.get(url, timeout=30)
+           f"?aggregate=1&limit=1000&currency=usd&token={token}")
+    for wait in (0, 15, 30, 60):      # GeckoTerminal drosselt geteilte IPs (GitHub) schnell
+        time.sleep(wait)
+        try:
+            data = funnel.get(url, timeout=30)
+            break
+        except Exception as e:
+            if "429" not in str(e) or wait == 60:
+                raise
     rows = ((data.get("data") or {}).get("attributes") or {}).get("ohlcv_list") or []
     return sorted(rows)   # [ts, open, high, low, close, volume], alt -> neu
 
@@ -82,12 +90,16 @@ def check(c):
     out["mc_now"] = p.get("marketCap") or p.get("fdv") or 0
     out["liq_now"] = (p.get("liquidity") or {}).get("usd") or 0
     price_now = float(p.get("priceUsd") or 0)
+    if out["liq_now"] < MIN_LIQ:
+        out["error"] = f"keine Liquidität mehr ({out['liq_now']:.0f} $) – Kurs nur rechnerisch, nicht verkaufbar"
+        out["x_now"] = 0.0
+        return out
     try:
-        rows = candles(p["pairAddress"])
+        rows = candles(p["pairAddress"], c["addr"])
     except Exception as e:
         rows = []
         out["note"] = f"keine Kursgeschichte ({e})"
-    time.sleep(2.2)    # GeckoTerminal: 30 Abfragen pro Minute
+    time.sleep(4)      # GeckoTerminal: max. 30 Abfragen pro Minute, auf GitHub lieber deutlich weniger
     t0 = c["t"] - c["t"] % 3600
     after = [r for r in rows if r[0] >= t0]
     if after:
@@ -101,6 +113,12 @@ def check(c):
             out["mc_first"] = out["mc_now"] / out["x_now"]
     elif out.get("mc_first"):
         out["x_now"] = round(out["mc_now"] / out["mc_first"], 2)
+    # Plausibilität: Kursverlauf muss zur Market-Cap-Entwicklung passen, sonst passt die Kerze nicht zum Coin
+    if c.get("mc_first") and out.get("mc_now") and out.get("x_peak"):
+        x_mc = out["mc_now"] / c["mc_first"]
+        if out.get("x_now") and not (0.6 < out["x_now"] / x_mc < 1.6):
+            out["note"] = f"Kursverlauf unplausibel (Kurs {out['x_now']}x vs. MC {x_mc:.2f}x) – nur MC-Wert genommen"
+            out["x_now"], out["x_peak"] = round(x_mc, 2), None
     return out
 
 
