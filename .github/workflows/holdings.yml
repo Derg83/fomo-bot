@@ -1,0 +1,33 @@
+name: Smart-Wallet-Bestaende
+
+# Auf Knopfdruck: Was halten unsere Pool-Wallets gerade, und wie schneiden die Coins nach unseren Regeln ab?
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bestand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Bestaende pruefen
+        env:
+          HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+        run: python3 wallet_holdings.py
+      - name: Ergebnis speichern
+        run: |
+          git config user.name "fomo-bot"
+          git config user.email "fomo-bot@users.noreply.github.com"
+          cp wallet_holdings.json /tmp/
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp /tmp/wallet_holdings.json .
+            git add wallet_holdings.json
+            git commit -q -m "Smart-Wallet-Bestaende $(date -u +%d.%m.%H:%M) UTC" || exit 0
+            if git push -q origin HEAD:main; then exit 0; fi
+            sleep 15
+          done
+          exit 1
