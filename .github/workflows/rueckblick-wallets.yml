@@ -23,6 +23,7 @@ jobs:
           git fetch -q --depth 1 origin +rueckblick-daten:refs/remotes/origin/rueckblick-daten
           mkdir -p rueckblick
           git show origin/rueckblick-daten:rueckblick/coins.json.gz > rueckblick/coins.json.gz
+          python3 -c "import numpy" 2>/dev/null || pip install -q numpy
           python3 rueckblick_analyse.py rueckblick/coins.json.gz > /tmp/analyse.txt
           tail -5 /tmp/analyse.txt
       - name: Früh-Käufer suchen und bewerten
