@@ -2,10 +2,13 @@
 Fomo-Bot – TESTMODUS (Paper Trading), drei Bots im Vergleich, mit Live-Dashboard
 Handelt mit echten Live-Kursen, aber nur auf dem Papier. Kein Geld, keine Wallet, kein Schlüssel.
 
-Drei Bots mit getrennten Papier-Konten (je 13 % pro Trade):
+Mehrere Bots mit getrennten Papier-Konten (je 13 % pro Trade):
   "alle"     – jeder Coin, der den Trichter besteht (ab 6 h alt), TP +20 % / Stop -20 %
   "14tage"   – nur Coins ab 14 Tagen Alter, TP +20 % / Stop -20 %
   "tempo"    – wie "alle", aber TP +10 % / Stop -8 %, 5 Positionen, max. 6 h -> mehr Trades
+  "trail"    – Hälfte bei +15 % verkaufen, Rest bis 10 % unter dem Hoch laufen lassen
+  "qualitaet" – nur MC ab 1 Mio., Liquidität ab 10 % der MC, Top-10 unter 25 %, Einstieg nur mit Momentum,
+                TP +20 % / Stop -30 % (viele spätere Gewinner fallen vorher 15-27 %)
 
 Läuft auf zwei Arten:
   python fomo_bot.py           Dauerschleife auf deinem PC (jede Minute, Strg+C stoppt)
@@ -41,6 +44,10 @@ BOTS = {
     "trail":  {"label": "Trailing",        "min_age_days": 0,
                "take_profit": 99, "stop_loss": 0.10, "max_hold_h": 72,
                "partial_tp": 0.15, "partial_part": 0.5, "trail_dist": 0.10},
+    # Nur große, breit verteilte Coins mit Momentum; weiter Stop, weil viele Gewinner erst 15-27 % fallen
+    "qualitaet": {"label": "Qualität + Momentum", "min_age_days": 0,
+                  "take_profit": 0.20, "stop_loss": 0.30, "max_hold_h": 24,
+                  "min_mc": 1_000_000, "min_liq_mc": 0.10, "max_top10": 25, "momentum": True},
 }
 
 START_BALANCE = 30.0        # Papier-Startkapital pro Bot in $
@@ -69,6 +76,10 @@ TRAIL_DIST = 0              # nach dem Teilverkauf: raus, wenn x unter dem Hoch 
 HISTORY_EVERY_MIN = 10      # Konto-Stand fürs Diagramm alle 10 Min. merken
 AFTER_H = (1, 6, 24)        # Kurs so viele Stunden nach dem Verkauf mitschreiben (für Auswertungen)
 HISTORY_MAX = 3000          # so viele Konto-Stände fürs Diagramm merken
+MIN_MC = 0                  # Coin-Filter je Bot: Market Cap mindestens ($)
+MIN_LIQ_MC = 0              # Liquidität mindestens x der Market Cap
+MAX_TOP10 = 100             # Top-10-Holder höchstens x %
+MOMENTUM = False            # Einstieg nur, wenn Volumen der letzten 6 h über dem Tagesschnitt und mehr Käufe als Verkäufe (1 h)
 # =============================================================
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -158,9 +169,13 @@ def get_prices(addrs):
             except ValueError:
                 price = 0
             if price > 0:
+                vol = p.get("volume") or {}
+                tx1 = (p.get("txns") or {}).get("h1") or {}
                 out[a] = {"price": price, "liq": liq, "m5": ch.get("m5") or 0,
                           "h1": ch.get("h1") or 0, "h24": ch.get("h24") or 0,
-                          "mc": p.get("marketCap") or p.get("fdv") or 0}
+                          "mc": p.get("marketCap") or p.get("fdv") or 0,
+                          "v6": vol.get("h6") or 0, "v24": vol.get("h24") or 0,
+                          "b1": tx1.get("buys") or 0, "s1": tx1.get("sells") or 0}
     return out
 
 
@@ -177,7 +192,8 @@ def scan(meta):
     meta["counts"] = counts
     log(f"Trichter: {counts['Eingang']} rein, {len(final)} durch, {len(watch)} Watchlist")
     return [{"addr": c["addr"], "sym": c["sym"], "age_d": c["age_h"] / 24, "mc": c["mc"],
-             "cluster": c.get("cluster")} for c in final + watch]
+             "cluster": c.get("cluster"), "liq": c.get("liq") or 0, "top10": c.get("top10")}
+            for c in final + watch]
 
 
 def update_watch(name, state, candidates):
@@ -188,6 +204,10 @@ def update_watch(name, state, candidates):
         if c["age_d"] < BOTS[name]["min_age_days"]:
             continue
         if a in state["open"] or state["cooldown"].get(a, 0) > now or LOSERS.get(a, 0) > now:
+            continue
+        if c["mc"] < P(name, "min_mc") or c.get("liq", 0) < c["mc"] * P(name, "min_liq_mc"):
+            continue
+        if P(name, "max_top10") < 100 and (c.get("top10") is None or c["top10"] > P(name, "max_top10")):
             continue
         state["watch"][a] = {"sym": c["sym"], "age_d": round(c["age_d"], 1), "mc": c["mc"],
                              "cluster": c.get("cluster")}
@@ -209,6 +229,8 @@ def try_entries(name, state, prices):
             continue
         if not (P(name, "entry_h1_min") <= q["h1"] <= P(name, "entry_h1_max")
                 and q["m5"] >= P(name, "entry_m5_min") and q["h24"] < P(name, "entry_max_24h")):
+            continue
+        if P(name, "momentum") and not (q.get("v6", 0) / 6 > q.get("v24", 0) / 24 and q.get("b1", 0) > q.get("s1", 0)):
             continue
         stake = min(state["cash"], equity(state, prices) * P(name, "position_pct"))
         if stake < 1:
@@ -403,10 +425,10 @@ def report(states):
 
 # ---------------------------------------------------------------- Dashboard
 CSS = """
-:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;--d:#13897c;
+:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;--d:#13897c;--e:#c2417a;
 --good:#1f8a5b;--bad:#c4413b;--chip:#eef1f5;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--fg:#e8eaed;--muted:#99a1ad;--line:#2a3039;
---a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--d:#3cc7b6;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
+--a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--d:#3cc7b6;--e:#f07aa8;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 .wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
 header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:16px}
@@ -523,12 +545,12 @@ def equity_chart(meta):
     parts.append('</g>')
     parts.append(f'<text x="{L}" y="{H - 6}">{berlin(x0):%d.%m. %H:%M}</text>'
                  f'<text x="{W - R}" y="{H - 6}" text-anchor="end">{berlin(x1):%d.%m. %H:%M}</text>')
-    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)"]
     for i, _ in enumerate(BOTS):
         pts = " ".join(f"{X(h[0]):.1f},{Y(h[i + 1]):.1f}" for h in hist if len(h) > i + 1)
-        parts.append(f'<polyline fill="none" stroke="{colors[i % 4]}" stroke-width="2" points="{pts}"/>')
+        parts.append(f'<polyline fill="none" stroke="{colors[i % 5]}" stroke-width="2" points="{pts}"/>')
         last = hist[-1]
-        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 4]}"/>')
+        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 5]}"/>')
     parts.append('</svg>')
     return "".join(parts)
 
@@ -559,15 +581,28 @@ def exit_rule(n):
     return f'TP +{P(n, "take_profit") * 100:.0f} %'
 
 
+def bot_filters(n):
+    bits = []
+    if P(n, "min_mc"):
+        bits.append(f'MC ab {funnel.fmt(P(n, "min_mc"))}')
+    if P(n, "min_liq_mc"):
+        bits.append(f'Liq. ab {P(n, "min_liq_mc") * 100:.0f} % der MC')
+    if P(n, "max_top10") < 100:
+        bits.append(f'Top-10 unter {P(n, "max_top10")} %')
+    if P(n, "momentum"):
+        bits.append('Volumen steigt + mehr Käufe als Verkäufe')
+    return "".join(" · " + b for b in bits)
+
+
 def write_dashboard(states, meta, prices):
     now = time.time()
-    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)"]
     cards = []
     for i, (n, s) in enumerate(states.items()):
         x = summary(s, prices)
         rate = f"{x['rate']:.0f} %" if x["rate"] is not None else "–"
         cards.append(
-            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 4]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
+            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 5]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
             f'<div class="big">{x["equity"]:.2f} $</div><div>{pct(x["ret"])} seit Start ({START_BALANCE:.0f} $)</div>'
             f'<div class="kv"><span>Trades</span><span>{x["n"]}</span>'
             f'<span>Trefferquote</span><span>{rate} <span class="muted small">(Ziel über 56 %)</span></span>'
@@ -575,7 +610,7 @@ def write_dashboard(states, meta, prices):
             f'<span>Ø Verlierer</span><span>{pct(x["avg_loss"])}</span>'
             f'<span>Offen</span><span>{x["open"]} von {P(n, "max_open")}</span></div>'
             f'<p class="small muted">{exit_rule(n)} · Stop -{P(n, "stop_loss") * 100:.0f} % · '
-            f'max. {P(n, "max_hold_h")} h · ab {BOTS[n]["min_age_days"]} Tagen</p></div>')
+            f'max. {P(n, "max_hold_h")} h · ab {BOTS[n]["min_age_days"]} Tagen{bot_filters(n)}</p></div>')
 
     open_rows, closed_rows, watch_html = [], [], []
     for n, s in states.items():
