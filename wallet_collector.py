@@ -55,7 +55,10 @@ BOT_MEDIAN_HOLD_MIN = 2       # Haltedauer im Median darunter = Bot
 SNIPER_SEC = 120              # Kauf innerhalb von 2 Min. nach Pool-Start = Sniper-Kauf
 SNIPER_SHARE = 0.5            # ab 50 % Sniper-Käufe = nicht nachmachbar
 
-RESCORE_D = 3                 # Pool-Wallets alle 3 Tage neu bewerten
+FUNDER_MAX_PAGES = 5          # Geldquelle: höchstens 5 x 1000 Signaturen zurückblättern
+EXCHANGE_FUNDS = 5            # eine Geldquelle, die mehr als 5 unserer Wallets versorgt = Börse, keine Gruppe
+
+RESCORE_D = 3                # Pool-Wallets alle 3 Tage neu bewerten
 RECHECK_OUT_D = 14            # aussortierte Wallets frühestens nach 14 Tagen nochmal
 MAX_SCORE_PER_RUN = 120       # so viele Wallets pro Lauf auslesen
 CREDITS_MONTH_MAX = 800_000   # Helius-Gratis-Tarif hat 1 Mio. Credits/Monat, Rest als Puffer
@@ -186,17 +189,37 @@ class Rpc:
                 out.append(tx)
         return out
 
-    def first_transactions(self, addr):
-        """Älteste Transaktionen (für die Geldquelle). Geht nur mit getTransactionsForAddress."""
-        if not self.gtfa:
-            return []
-        try:
-            res = self.call("getTransactionsForAddress", [addr, {
-                "transactionDetails": "full", "sortOrder": "asc", "limit": 5,
-                "encoding": "json", "maxSupportedTransactionVersion": 0}], credits=10)
-            return (res or {}).get("data") or []
-        except RuntimeError:
-            return []
+    def first_transactions(self, addr, sigs=None):
+        """Älteste Transaktionen (für die Geldquelle)."""
+        if self.gtfa:
+            try:
+                res = self.call("getTransactionsForAddress", [addr, {
+                    "transactionDetails": "full", "sortOrder": "asc", "limit": 5,
+                    "encoding": "json", "maxSupportedTransactionVersion": 0}], credits=10)
+                return (res or {}).get("data") or []
+            except RuntimeError:
+                pass
+        # Ersatzweg: Signaturen bis zum Anfang zurückblättern (1 Credit pro 1000), dann die ältesten laden
+        s = sigs if sigs is not None else self.signatures(addr)
+        pages = 0
+        while len(s) >= SIG_SCAN and pages < FUNDER_MAX_PAGES:
+            more = self.call("getSignaturesForAddress", [addr, {"limit": SIG_SCAN, "before": s[-1]["signature"]}]) or []
+            pages += 1
+            if not more:
+                break
+            s = more
+        if len(s) >= SIG_SCAN:
+            return []     # zu viel Verlauf, Anfang nicht erreichbar
+        out = []
+        for x in reversed(s[-3:]):
+            try:
+                tx = self.call("getTransaction", [x["signature"], {
+                    "encoding": "json", "maxSupportedTransactionVersion": 0}])
+            except RuntimeError:
+                continue
+            if tx:
+                out.append(tx)
+        return out
 
 
 # ---------------------------------------------------------------- Transaktionen lesen
@@ -397,8 +420,9 @@ def evaluate(rpc, w, data):
     s["tx_read"] = len(txs)
     if not txs:
         s["status"], s["why"] = "Keine Daten", "keine Transaktionen gefunden"
-    if s["status"] == "Pool" and not w.get("funder"):
-        w["funder"] = funder_of(rpc.first_transactions(addr), addr)
+    if s["status"] == "Pool" and not w.get("funder_checked"):
+        w["funder"] = funder_of(rpc.first_transactions(addr, sigs), addr)
+        w["funder_checked"] = True
     w.update(s)
     w["checked"] = now()
 
@@ -508,15 +532,20 @@ def queue(data):
 
 
 # ---------------------------------------------------------------- Ergebnis
-def groups(pool):
-    """Wallets mit gleicher Geldquelle = vermutlich eine Person -> gleiche Gruppe."""
+def groups(pool, all_wallets=None):
+    """Wallets mit gleicher Geldquelle = vermutlich eine Person -> gleiche Gruppe.
+    Versorgt eine Quelle sehr viele Wallets, ist es eher eine Börse -> keine Gruppe."""
+    funded = {}
+    for w in all_wallets or pool:
+        if w.get("funder"):
+            funded[w["funder"]] = funded.get(w["funder"], 0) + 1
     by = {}
     for w in pool:
         if w.get("funder"):
             by.setdefault(w["funder"], []).append(w["addr"])
     gid, out = 0, {}
     for f, ws in by.items():
-        if len(ws) > 1:
+        if 1 < len(ws) and funded.get(f, 0) <= EXCHANGE_FUNDS:
             gid += 1
             for a in ws:
                 out[a] = gid
@@ -552,7 +581,7 @@ def write_page(data):
     # Oben: Wallets, die auch ohne ihren größten Treffer im Plus sind, dann nach ROI
     pool = sorted([w for w in ws if w.get("status") == "Pool"],
                   key=lambda w: ((w.get("pnl10_ohne_top") or 0) > 0, w.get("roi10") or 0), reverse=True)
-    grp = groups(pool)
+    grp = groups(pool, ws)
     write_csv(pool, grp)
 
     counts = {s: 0 for s in STATUS_ORDER + ["Neu"]}
@@ -624,8 +653,18 @@ def main():
     if not key:
         raise SystemExit("HELIUS_API_KEY fehlt. Im GitHub-Repo unter Settings > Secrets > Actions eintragen.")
     rpc = Rpc(key, data)
+    rpc.gtfa = data.get("gtfa", True)    # einmal festgestellt, dass es im Tarif fehlt -> nicht jedes Mal neu testen
     collect(data)
     save(data)
+
+    # Geldquelle für Pool-Wallets nachholen, die noch keine Prüfung hatten (kostet nur wenige Credits)
+    for w in [w for w in data["wallets"].values() if w.get("status") == "Pool" and not w.get("funder_checked")]:
+        try:
+            w["funder"] = funder_of(rpc.first_transactions(w["addr"]), w["addr"])
+            w["funder_checked"] = True
+        except Exception as e:
+            log(f"  Geldquelle {short(w['addr'])}: {e}")
+    data["gtfa"] = rpc.gtfa
 
     todo = queue(data)[:MAX_SCORE_PER_RUN]
     log(f"Lese {len(todo)} Wallets aus ({len(data['wallets'])} bekannt, Credits übrig: {rpc.credits_left():,})")
@@ -644,6 +683,7 @@ def main():
         log(f"  {short(w['addr'])}: {w['status']} – {w.get('why', '')}")
         if done % 10 == 0:
             save(data)
+    data["gtfa"] = rpc.gtfa
     data["runs"] = (data["runs"] + [{"t": now(), "scored": done, "credits": rpc.used}])[-60:]
     save(data)
     write_page(data)
