@@ -1,0 +1,29 @@
+name: Rueckblick-Daten
+
+# Auf Knopfdruck: Kursverläufe von ein paar Hundert Memecoins sammeln (für das Reverse Engineering).
+# Die Daten landen auf dem Branch "rueckblick-daten", nicht auf main.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sammeln:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - name: Kursverläufe sammeln
+        run: python3 rueckblick_sammeln.py
+      - name: Auf Branch rueckblick-daten speichern
+        run: |
+          cp rueckblick/coins.json.gz /tmp/coins.json.gz
+          git config user.name "fomo-bot"
+          git config user.email "fomo-bot@users.noreply.github.com"
+          git checkout -q --orphan rueckblick-daten
+          git rm -rfq --cached . >/dev/null
+          mkdir -p rueckblick && cp /tmp/coins.json.gz rueckblick/coins.json.gz
+          git add -f rueckblick/coins.json.gz
+          git commit -q -m "Rueckblick-Daten $(date -u +%d.%m.%H:%M) UTC"
+          git push -q -f origin HEAD:rueckblick-daten
