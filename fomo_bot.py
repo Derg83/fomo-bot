@@ -284,15 +284,21 @@ def manage_exits(name, state, prices):
 
 def cycle(states, meta):
     """Eine komplette Runde: ggf. Trichter, Kurse, Ausstiege, Einstiege, Verlauf."""
+    now = time.time()
+    LOSERS.clear()
+    if not meta.get("losers_seeded"):    # einmalig: Verluste von vor der Sperr-Regel nachtragen
+        meta["losers_seeded"] = True
+        for st in states.values():
+            for t in st["closed"]:
+                if t["pnl"] < 0:
+                    LOSERS[t["addr"]] = max(LOSERS.get(t["addr"], 0), t["exit_time"] + LOSS_COOLDOWN_H * 3600)
+    LOSERS.update({a: t for a, t in (meta.get("losers") or {}).items() if t > now})
     if time.time() - meta["last_scan"] >= SCAN_EVERY_MIN * 60:
         candidates = scan(meta)
         if candidates is not None:
             for n, s in states.items():
                 update_watch(n, s, candidates)
             meta["last_scan"] = time.time()
-    now = time.time()
-    LOSERS.clear()
-    LOSERS.update({a: t for a, t in (meta.get("losers") or {}).items() if t > now})
     addrs = set()
     for s in states.values():
         addrs |= set(s["open"]) | set(s["watch"])
