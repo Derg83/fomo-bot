@@ -51,6 +51,9 @@ BUY_SELL_MIN = 0.4         # starker Verkaufsdruck
 PUMP_24H = 400             # +% in 24h = Timing (Watchlist)
 PUMP_1H = 30               # +% in 1h  = Timing (Watchlist)
 
+CLUSTER_FAIL = 10          # verbundene Top-Holder (gleiche Geldquelle) halten ab % = raus
+CLUSTER_WARN = 5           # ab % = Warnung
+
 REIFE_TAGE = 14            # ab so vielen Tagen gilt ein Coin als "reif" (nur Markierung, kein Filter)
 # =====================================================================
 
@@ -60,7 +63,7 @@ SKIP = {
     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
 }
-STAGES = ["Eingang", "Markt", "Contract", "Holder", "Handel", "Timing"]
+STAGES = ["Eingang", "Markt", "Contract", "Holder", "Cluster", "Handel", "Timing"]
 
 
 def get(url, timeout=15):
@@ -233,6 +236,31 @@ def stage_holder(c, rc):
     return r
 
 
+def stage_cluster(c, rc, checker):
+    """Eigene Mini-Bubblemap: hängen die größten Holder über ihre Geldquelle zusammen?"""
+    pools = {m.get("pubkey") for m in rc.get("markets") or []} | c["pairs"]
+    for m in rc.get("markets") or []:
+        for k in ("liquidityA", "liquidityB", "liquidityAAccount", "liquidityBAccount"):
+            if isinstance(m.get(k), str):
+                pools.add(m[k])
+    known = set((rc.get("knownAccounts") or {}).keys())
+    holders = [(h["owner"], h.get("pct") or 0) for h in rc.get("topHolders") or []
+               if h.get("owner") and h["owner"] not in pools and h["owner"] not in known]
+    res = checker.check(c["addr"], holders)
+    if res["status"] == "off":
+        c["warns"].append(f"Cluster-Check übersprungen ({res.get('why', '')})")
+        return []
+    if res["status"] == "pending":
+        return [f"Cluster-Check läuft noch ({res.get('why', '')})"]
+    c["cluster"] = res["cluster_pct"]
+    n = sum(len(g) for g in res["groups"])
+    if res["cluster_pct"] > CLUSTER_FAIL:
+        return [f"Cluster: {n} verbundene Top-Holder halten {res['cluster_pct']:.1f} %"]
+    if res["cluster_pct"] > CLUSTER_WARN:
+        c["warns"].append(f"Cluster: {n} verbundene Top-Holder halten {res['cluster_pct']:.1f} %")
+    return []
+
+
 def stage_trading(c):
     r = []
     tx = c["buys"] + c["sells"]
@@ -333,6 +361,15 @@ def run_funnel(coins, rugcheck_fn):
         reports[c["addr"]] = rugcheck_fn(c["addr"])
     sieve("Contract", lambda c: stage_contract(c, reports[c["addr"]]))
     sieve("Holder", lambda c: stage_holder(c, reports[c["addr"]]))
+    import cluster_check
+    checker = cluster_check.Checker()
+    try:
+        sieve("Cluster", lambda c: stage_cluster(c, reports[c["addr"]], checker))
+    finally:
+        checker.save()
+    if checker.on:
+        print(f"  Cluster-Check: {checker.new} neue Wallets nachgeschlagen, "
+              f"{checker.credits_today()} Credits heute")
     sieve("Handel", stage_trading)
 
     final, watch = [], []
@@ -403,6 +440,7 @@ def show(c):
     print(f"    CA: {a}")
     print(f"    https://dexscreener.com/solana/{a}")
     print(f"    https://trench.bot/bundles/{a}")
+    print(f"    https://app.bubblemaps.io/sol/token/{a}")
 
 
 def write_html(counts, final, watch, coins, path):

@@ -176,8 +176,8 @@ def scan(meta):
         return None
     meta["counts"] = counts
     log(f"Trichter: {counts['Eingang']} rein, {len(final)} durch, {len(watch)} Watchlist")
-    return [{"addr": c["addr"], "sym": c["sym"], "age_d": c["age_h"] / 24, "mc": c["mc"]}
-            for c in final + watch]
+    return [{"addr": c["addr"], "sym": c["sym"], "age_d": c["age_h"] / 24, "mc": c["mc"],
+             "cluster": c.get("cluster")} for c in final + watch]
 
 
 def update_watch(name, state, candidates):
@@ -189,7 +189,8 @@ def update_watch(name, state, candidates):
             continue
         if a in state["open"] or state["cooldown"].get(a, 0) > now or LOSERS.get(a, 0) > now:
             continue
-        state["watch"][a] = {"sym": c["sym"], "age_d": round(c["age_d"], 1), "mc": c["mc"]}
+        state["watch"][a] = {"sym": c["sym"], "age_d": round(c["age_d"], 1), "mc": c["mc"],
+                             "cluster": c.get("cluster")}
 
 
 # ---------------------------------------------------------------- Handel (Papier)
@@ -535,7 +536,8 @@ def equity_chart(meta):
 def coin_links(a):
     return (f'<a href="https://dexscreener.com/solana/{a}">Chart</a> · '
             f'<a href="https://rugcheck.xyz/tokens/{a}">RugCheck</a> · '
-            f'<a href="https://trench.bot/bundles/{a}">Trench</a>')
+            f'<a href="https://trench.bot/bundles/{a}">Trench</a> · '
+            f'<a href="https://app.bubblemaps.io/sol/token/{a}">Bubblemaps</a>')
 
 
 def trade_extra(t):
@@ -590,8 +592,10 @@ def write_dashboard(states, meta, prices):
                 f'<td>{berlin(t["exit_time"]):%d.%m. %H:%M}</td><td>{pct(t["pnl_pct"])}<br>'
                 f'<span class="small muted">{t["pnl"]:+.2f} $</span></td><td class="small">{html.escape(t["reason"])}{trade_extra(t)}</td></tr>'))
         chips = "".join(f'<div><span class="chip">${html.escape(w["sym"])}</span>'
-                        f'<span class="small muted">{w.get("age_d", "?")} Tage · MC {funnel.fmt(w.get("mc") or 0)}</span>'
-                        f'<br><code>{a}</code></div>' for a, w in s["watch"].items())
+                        f'<span class="small muted">{w.get("age_d", "?")} Tage · MC {funnel.fmt(w.get("mc") or 0)}'
+                        f'{" · Cluster " + format(w["cluster"], ".1f") + " %" if w.get("cluster") is not None else ""}</span>'
+                        f'<br><code>{a}</code><br><span class="small">{coin_links(a)}</span></div>'
+                        for a, w in s["watch"].items())
         watch_html.append(f'<div class="card"><h3>{html.escape(BOTS[n]["label"])}</h3>'
                           f'{chips or "<p class=muted>Gerade nichts, was alle Regeln besteht.</p>"}</div>')
     closed_rows = [r for _, r in sorted(closed_rows, reverse=True)[:20]]

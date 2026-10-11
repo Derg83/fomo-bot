@@ -65,7 +65,7 @@ BOT_WINNERS_D = 7             # Coins, mit denen unsere Papier-Bots in den letzt
 RESCORE_D = 3                # Pool-Wallets alle 3 Tage neu bewerten
 RECHECK_OUT_D = 14            # aussortierte Wallets frühestens nach 14 Tagen nochmal
 MAX_SCORE_PER_RUN = 200       # so viele Wallets pro Lauf auslesen (~22.000 Credits)
-CREDITS_MONTH_MAX = 800_000   # Helius-Gratis-Tarif hat 1 Mio. Credits/Monat, Rest als Puffer
+CREDITS_MONTH_MAX = 650_000   # Helius-Gratis-Tarif: 1 Mio./Monat. ~120.000 gehen an den Cluster-Check im Trichter, Rest Puffer
 RPC_PAUSE = 0.12              # Pause zwischen Abfragen (Gratis-Tarif: 10 pro Sekunde)
 # =====================================================================
 
