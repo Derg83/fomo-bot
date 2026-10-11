@@ -31,11 +31,17 @@ jobs:
         run: |
           git config user.name "fomo-bot"
           git config user.email "fomo-bot@users.noreply.github.com"
-          git add wallets.json wallet_pool.csv docs/wallets.html 2>/dev/null || true
-          git commit -q -m "Wallet-Sammler $(date -u +%d.%m.%H:%M) UTC" || exit 0
-          for i in 1 2 3 4 5; do
-            if git pull --rebase -q origin main && git push -q origin HEAD:main; then exit 0; fi
-            git rebase --abort 2>/dev/null || true
-            sleep 15
+          # Ergebnis beiseitelegen, auf den neuesten Stand (der Bot pusht alle 10 Min.) setzen, wieder drauf
+          mkdir -p /tmp/out
+          for f in wallets.json wallet_pool.csv docs/wallets.html; do
+            [ -f "$f" ] && mkdir -p "/tmp/out/$(dirname $f)" && cp "$f" "/tmp/out/$f"
+          done
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp -r /tmp/out/. .
+            git add wallets.json wallet_pool.csv docs/wallets.html 2>/dev/null || true
+            git commit -q -m "Wallet-Sammler $(date -u +%d.%m.%H:%M) UTC" || exit 0
+            if git push -q origin HEAD:main; then echo "gespeichert"; exit 0; fi
+            sleep 20
           done
           echo "Push fehlgeschlagen" && exit 1

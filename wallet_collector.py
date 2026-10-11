@@ -465,8 +465,17 @@ def traders_of(c):
 
 
 def collect(data):
-    for c in find_winners(data):
-        holders, rc = holders_of(c)
+    try:
+        winners = find_winners(data)
+    except Exception as e:
+        log(f"Gewinner-Suche fehlgeschlagen: {e}")
+        winners = []
+    for c in winners:
+        try:
+            holders, rc = holders_of(c)
+        except Exception as e:
+            log(f"  ${c['sym']}: RugCheck-Fehler {e}")
+            continue
         if rc.get("rugged"):
             continue
         traders = traders_of(c)
@@ -625,7 +634,12 @@ def main():
         if rpc.credits_left() < 2000:
             log("Monatsbudget an Credits fast aufgebraucht, höre auf.")
             break
-        evaluate(rpc, w, data)
+        try:
+            evaluate(rpc, w, data)
+        except SystemExit:
+            raise
+        except Exception as e:   # eine kaputte Wallet soll nicht den ganzen Lauf abbrechen
+            w.update(status="Keine Daten", why=f"Fehler: {str(e)[:100]}", checked=now())
         done += 1
         log(f"  {short(w['addr'])}: {w['status']} – {w.get('why', '')}")
         if done % 10 == 0:
