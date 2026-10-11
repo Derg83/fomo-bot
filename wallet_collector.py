@@ -175,7 +175,7 @@ class Rpc:
             try:
                 res = self.call("getTransactionsForAddress", [addr, {
                     "transactionDetails": "full", "sortOrder": "desc", "limit": TX_PER_WALLET,
-                    "encoding": "json", "maxSupportedTransactionVersion": 0,
+                    "encoding": "json", "maxSupportedTransactionVersion": 1,
                     "filters": {"status": "succeeded", "tokenAccounts": "balanceChanged"}}],
                     credits=10 * -(-TX_PER_WALLET // 100))
                 return (res or {}).get("data") or []
@@ -186,7 +186,7 @@ class Rpc:
         for s in [s for s in sigs if not s.get("err")][:TX_PER_WALLET]:
             try:
                 tx = self.call("getTransaction", [s["signature"], {
-                    "encoding": "json", "maxSupportedTransactionVersion": 0}])
+                    "encoding": "json", "maxSupportedTransactionVersion": 1}])
             except RuntimeError:
                 continue
             if tx:
@@ -199,7 +199,7 @@ class Rpc:
             try:
                 res = self.call("getTransactionsForAddress", [addr, {
                     "transactionDetails": "full", "sortOrder": "asc", "limit": 5,
-                    "encoding": "json", "maxSupportedTransactionVersion": 0}], credits=10)
+                    "encoding": "json", "maxSupportedTransactionVersion": 1}], credits=10)
                 return (res or {}).get("data") or []
             except RuntimeError:
                 pass
@@ -218,7 +218,7 @@ class Rpc:
         for x in reversed(s[-3:]):
             try:
                 tx = self.call("getTransaction", [x["signature"], {
-                    "encoding": "json", "maxSupportedTransactionVersion": 0}])
+                    "encoding": "json", "maxSupportedTransactionVersion": 1}])
             except RuntimeError:
                 continue
             if tx:
