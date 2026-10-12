@@ -1,0 +1,36 @@
+name: Sicherheits-Rueckblick
+
+# Auf Knopfdruck: Welche Coins aus dem Rückblick wären an unserem Sicherheitscheck gescheitert,
+# und wie viele davon lagen trotzdem lange über 1 Mio. Market Cap?
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - name: Rückblick-Daten holen
+        run: |
+          git fetch -q --depth 1 origin rueckblick-daten
+          git show origin/rueckblick-daten:rueckblick/coins.json.gz > /tmp/coins.json.gz
+      - name: Prüfen
+        run: python3 sicherheit_rueckblick.py /tmp/coins.json.gz
+      - name: Ergebnis speichern
+        run: |
+          git config user.name "fomo-bot"
+          git config user.email "fomo-bot@users.noreply.github.com"
+          cp sicherheit_rueckblick.json /tmp/
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp /tmp/sicherheit_rueckblick.json .
+            git add sicherheit_rueckblick.json
+            git commit -q -m "Sicherheits-Rückblick $(date -u +%d.%m.%H:%M) UTC" || exit 0
+            if git push -q origin HEAD:main; then exit 0; fi
+            sleep 15
+          done
+          exit 1
