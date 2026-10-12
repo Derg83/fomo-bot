@@ -32,7 +32,7 @@ WINDOW_AFTER_H = 2            # ... bis 2 h danach zählen als "früh"
 MAX_SIG_PAGES = 300           # höchstens so viele Seiten à 1000 Signaturen zurückblättern (1 Credit je Seite)
 TX_PER_WINNER = 250           # so viele Transaktionen aus dem Zeitfenster lesen
 MIN_BUY_SOL = 0.05            # kleinere Käufe = Staub/Bots
-SCORE_MAX = 120               # so viele Kandidaten bewerten (je ~110 Credits)
+SCORE_MAX = 80                # so viele Kandidaten bewerten (je ~110 Credits, ~45 s)
 CREDIT_RESERVE = 60_000       # so viele Credits im Monat übrig lassen (Trichter-Cluster-Check)
 
 
@@ -124,6 +124,8 @@ def main():
 
     # Kandidaten: zuerst die, die bei mehreren Gewinnern früh waren
     cands = sorted(per_wallet.items(), key=lambda x: (-len(x[1]["coins"]), -x[1]["sol"]))
+    with open(OUT, "w", encoding="utf-8") as f:
+        json.dump({"t": time.time(), "winners": report, "wallets": {a: v for a, v in cands[:500]}}, f, indent=1)
     log(f"{len(per_wallet)} Früh-Käufer insgesamt, {sum(1 for _, v in cands if len(v['coins']) >= 2)} bei 2+ Gewinnern")
     scored = 0
     for a, v in cands:
@@ -142,6 +144,8 @@ def main():
             w.update(status="Keine Daten", why=f"Fehler: {str(e)[:100]}", checked=time.time())
         scored += 1
         v["status"], v["why"] = w.get("status"), w.get("why")
+        if scored % 10 == 0:
+            wc.save(data)     # Zwischenstand, falls das Zeitlimit zuschlägt
         log(f"  {a[:4]}…{a[-4:]} ({len(v['coins'])} Gewinner früh): {w.get('status')} – {w.get('why', '')}")
     data["gtfa"] = rpc.gtfa
     wc.save(data)
