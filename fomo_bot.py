@@ -63,6 +63,17 @@ BOTS = {
                "take_profit": 1.0, "stop_loss": 0.30, "max_hold_h": 48, "cooldown_h": 24},
 }
 
+# Warum kauft dieser Bot? (für die Push-Nachrichten, in einfachen Worten)
+WHY = {
+    "alle": "Coin hat alle Trichter-Regeln bestanden und sich nach einem Rücksetzer gefangen.",
+    "14tage": "Wie 'Alle Coins', aber nur Coins, die schon älter als 14 Tage sind.",
+    "tempo": "Schnelle Variante: kleine Ziele, enger Stop, viele Trades.",
+    "trail": "Lässt Gewinner laufen: Hälfte bei +15 % verkaufen, Rest folgt dem Kurs nach oben.",
+    "qualitaet": "Großer, breit verteilter Coin (ab 1 Mio. MC), Volumen steigt, mehr Käufe als Verkäufe.",
+    "smart": "Eine unserer Smart-Wallets (Wallets mit Gewinn in ihren letzten Trades) hat gerade gekauft.",
+    "muster": "Passt zum Gewinner-Muster aus dem Rückblick: 60-92 % unter dem ersten Hoch, wird noch gehandelt.",
+}
+
 START_BALANCE = 30.0        # Papier-Startkapital pro Bot in $
 POSITION_PCT = 0.13         # Einsatz pro Trade: 13 % des Kontos
 MAX_OPEN = 3                # höchstens so viele Positionen gleichzeitig (pro Bot)
@@ -303,9 +314,12 @@ def try_entries(name, state, prices):
             state["open"][a]["trigger"] = w["wallets"]
         del state["watch"][a]
         log(f"[{name}] KAUF (Papier) ${w['sym']} für {stake:.2f} $ bei MC {funnel.fmt(q['mc'])}  CA: {a}")
-        notify.push(f"KAUF {BOTS[name]['label']}: ${w['sym']} bei MC {funnel.fmt(q['mc'])}",
-                    f"{exit_rule(name)} · Stop -{P(name, 'stop_loss') * 100:.0f} %\nCA: {a}",
-                    click=notify.dex(a), priority=4 if P(name, "source") == "smart" else 3, tags=["moneybag"])
+        notify.push(f"🟢 KAUF · {BOTS[name]['label']} · ${w['sym']}",
+                    f"Der Bot hat ${w['sym']} auf dem Papier gekauft (kein echtes Geld) bei MC {funnel.fmt(q['mc'])}.\n"
+                    f"Warum: {WHY.get(name, '')}\n"
+                    f"Plan: {plan_text(name)}\n"
+                    f"Mitmachen nur mit kleinem Einsatz und denselben Regeln. Tippen = Chart.\nCA: {a}",
+                    click=notify.dex(a), priority=4 if P(name, "source") in ("smart", "muster") else 3, tags=["moneybag"])
 
 
 def close(name, state, a, price, reason):
@@ -330,7 +344,10 @@ def close(name, state, a, price, reason):
         LOSERS[a] = time.time() + LOSS_COOLDOWN_H * 3600
     write_journal(name, trade)
     log(f"[{name}] VERKAUF (Papier) ${p['sym']}: {reason} -> {pnl:+.2f} $ ({trade['pnl_pct']:+.1f} %)  CA: {a}")
-    notify.push(f"VERKAUF {BOTS[name]['label']}: ${p['sym']} {trade['pnl_pct']:+.1f} %", f"{reason}\nCA: {a}",
+    notify.push(f"{'✅' if pnl > 0 else '🔴'} VERKAUF · {BOTS[name]['label']} · ${p['sym']} {trade['pnl_pct']:+.1f} %",
+                f"Der Bot hat ${p['sym']} verkauft: {trade['pnl_pct']:+.1f} % nach Gebühren ({pnl:+.2f} $ auf dem Papier).\n"
+                f"Grund: {reason}\n"
+                f"Wenn du mitgemacht hast: jetzt ebenfalls verkaufen.\nCA: {a}",
                 click=notify.dex(a), priority=3, tags=["chart_with_upwards_trend" if pnl > 0 else "chart_with_downwards_trend"])
 
 
@@ -355,8 +372,10 @@ def manage_exits(name, state, prices):
             state["cash"] += got
             p["partial"] = True
             log(f"[{name}] TEILVERKAUF (Papier) ${p['sym']} bei +{change * 100:.0f} %  CA: {a}")
-            notify.push(f"TEILVERKAUF {BOTS[name]['label']}: ${p['sym']} +{change * 100:.0f} %",
-                        f"{P(name, 'partial_part') * 100:.0f} % verkauft, Rest läuft weiter\nCA: {a}",
+            notify.push(f"💰 TEILVERKAUF · {BOTS[name]['label']} · ${p['sym']} +{change * 100:.0f} %",
+                        f"Der Bot hat {P(name, 'partial_part') * 100:.0f} % seiner Position bei +{change * 100:.0f} % verkauft "
+                        f"und den Gewinn gesichert. Der Rest läuft weiter, bis der Kurs {P(name, 'trail_dist') * 100:.0f} % unter sein Hoch fällt.\n"
+                        f"Wenn du mitgemacht hast: jetzt ebenfalls einen Teil verkaufen.\nCA: {a}",
                         click=notify.dex(a), priority=3, tags=["moneybag"])
             continue
         if q["liq"] < p["entry_liq"] * (1 - P(name, "liq_drop_exit")):
@@ -404,8 +423,12 @@ def cycle(states, meta):
                 if now - told.get(a, 0) > 24 * 3600:
                     told[a] = now
                     mc = (meta["radar"]["pools"].get(a) or {}).get("mc") or 0
-                    notify.push(f"SMART-MONEY: ${v['sym']} (MC ca. {funnel.fmt(mc)})",
-                                f"{len(v['wallets'])} Wallet(s), davon {v['good']} gute, zusammen {v['usd']:.0f} $ gekauft\nCA: {a}",
+                    good_txt = f" (davon {v['good']} mit sehr guter Bilanz)" if v["good"] else ""
+                    notify.push(f"👀 SIGNAL · Smart-Wallet kauft ${v['sym']} (MC ca. {funnel.fmt(mc)})",
+                                f"{len(v['wallets'])} unserer Smart-Wallets haben gerade zusammen {v['usd']:.0f} $ in ${v['sym']} gekauft"
+                                f"{good_txt}.\n"
+                                f"Das ist erst ein Hinweis, noch kein Kauf: Der Smart-Money-Bot kauft nur, wenn auch der "
+                                f"Sicherheits-Check (Contract, Holder, Insider) besteht. Dann kommt eine KAUF-Nachricht.\nCA: {a}",
                                 click=notify.dex(a), priority=4, tags=["eyes"])
             meta["radar"]["notified"] = {a: t for a, t in told.items() if now - t < 48 * 3600}
             for n in smart:
@@ -676,6 +699,18 @@ def trade_extra(t):
     if aft:
         bits.append(" · ".join(aft))
     return "".join(f'<br><span class="muted">{b}</span>' for b in bits)
+
+
+def plan_text(n):
+    """Ausstiegsregeln eines Bots in einem Satz."""
+    stop = f"Stop bei -{P(n, 'stop_loss') * 100:.0f} %"
+    if P(n, "partial_tp"):
+        tp = (f"Hälfte bei +{P(n, 'partial_tp') * 100:.0f} % verkaufen, Rest bis {P(n, 'trail_dist') * 100:.0f} % "
+              f"unter dem Hoch laufen lassen")
+    else:
+        tp = f"verkaufen bei +{P(n, 'take_profit') * 100:.0f} %"
+    extra = ", oder sobald die Smart-Wallet verkauft" if P(n, "source") == "smart" else ""
+    return f"{tp}, {stop}{extra}, spätestens nach {P(n, 'max_hold_h')} h."
 
 
 def exit_rule(n):
