@@ -59,7 +59,8 @@ def features(c, s):
     for i, (t, o, h, l, cl, v) in enumerate(s):
         if h > ath:
             ath, ath_i = h, i
-        if l < low:
+            low, low_i = l, i        # Tief NACH dem bisherigen Hoch (Boden nach dem Absturz), nicht der Start-Kurs
+        elif l < low:
             low, low_i = l, i
         if i < 24:
             feats.append(None)
@@ -75,8 +76,8 @@ def features(c, s):
             "r24": cl / s[i - 24][4] - 1 if s[i - 24][4] else 0,
             "dd_ath": cl / ath if ath else 1,            # 1 = am Hoch, 0.2 = -80 % vom Hoch
             "h_since_ath": i - ath_i,
-            "h_since_low": i - low_i,                    # wie lange hält der Boden
-            "up_from_low": cl / low if low else 1,
+            "h_since_low": i - low_i,                    # wie lange hält der Boden (seit dem Tief nach dem Hoch)
+            "up_from_low": cl / low if low and low != math.inf else 1,
             "vol24_mc": v24 / mc if mc else 0,
             "vol_accel": (v6 / 6) / (v_prev18 / 18) if v_prev18 > 0 else (9.9 if v6 > 0 else 0),
             "ath_mc": ath * sup,

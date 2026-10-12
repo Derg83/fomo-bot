@@ -33,6 +33,7 @@ from datetime import datetime
 import memecoin_funnel as funnel
 import smart_radar as radar
 import notify
+import muster
 
 # ======================= EINSTELLUNGEN =======================
 # Jeder Bot kann einzelne Einstellungen von unten überschreiben.
@@ -56,6 +57,10 @@ BOTS = {
                "entry_h1_min": -50, "entry_h1_max": 100, "entry_m5_min": -100, "entry_max_24h": 1000,
                "take_profit": 99, "stop_loss": 0.30, "max_hold_h": 48,
                "partial_tp": 0.50, "partial_part": 0.5, "trail_dist": 0.25, "cooldown_h": 24},
+    # Muster aus dem Rückblick: 60-92 % unter dem ersten Hoch, 1-14 Tage, MC 50k-1,5 Mio., Volumen ≥50 % MC, 1 h ≤ +3 %
+    "muster": {"label": "Muster (Rückblick)", "min_age_days": 1, "source": "muster", "ignore_losers": True,
+               "entry_h1_min": -20, "entry_h1_max": 3, "entry_m5_min": -100, "entry_max_24h": 400,
+               "take_profit": 1.0, "stop_loss": 0.30, "max_hold_h": 48, "cooldown_h": 24},
 }
 
 START_BALANCE = 30.0        # Papier-Startkapital pro Bot in $
@@ -88,6 +93,7 @@ MIN_MC = 0                  # Coin-Filter je Bot: Market Cap mindestens ($)
 MIN_LIQ_MC = 0              # Liquidität mindestens x der Market Cap
 MAX_TOP10 = 100             # Top-10-Holder höchstens x %
 MAX_MC_ENTRY = 0            # Market Cap beim Kauf höchstens (0 = egal)
+IGNORE_LOSERS = False       # Verlust-Sperre anderer Bots ignorieren
 SOURCE = "trichter"         # woher die Kauf-Kandidaten kommen: "trichter" oder "smart" (Radar)
 MOMENTUM = False            # Einstieg nur, wenn Volumen der letzten 6 h über dem Tagesschnitt und mehr Käufe als Verkäufe (1 h)
 # =============================================================
@@ -201,15 +207,21 @@ def scan(meta):
         except Exception as e:
             log(f"Radar-Liste: {e}")
         remember_seen(coins)
-        counts, final, watch, _ = funnel.run_funnel(coins, funnel.rugcheck_live)
+        counts, final, watch, allc = funnel.run_funnel(coins, funnel.rugcheck_live)
     except Exception as e:
         log(f"Trichter-Fehler: {e}")
         return None
     meta["counts"] = counts
     log(f"Trichter: {counts['Eingang']} rein, {len(final)} durch, {len(watch)} Watchlist")
-    return [{"addr": c["addr"], "sym": c["sym"], "age_d": c["age_h"] / 24, "mc": c["mc"],
-             "cluster": c.get("cluster"), "liq": c.get("liq") or 0, "top10": c.get("top10")}
-            for c in final + watch]
+    out = [{"addr": c["addr"], "sym": c["sym"], "age_d": c["age_h"] / 24, "mc": c["mc"],
+            "cluster": c.get("cluster"), "liq": c.get("liq") or 0, "top10": c.get("top10")}
+           for c in final + watch]
+    if any(P(n, "source") == "muster" for n in BOTS):
+        try:
+            out += [dict(m, only_muster=True) for m in muster.candidates(allc, log)]
+        except Exception as e:
+            log(f"Muster-Fehler: {e}")
+    return out
 
 
 SEEN_FILE = os.path.join(HERE, "rueckblick", "gesehen.json")
@@ -237,11 +249,14 @@ def update_watch(name, state, candidates):
         return      # Kandidaten kommen vom Radar, nicht vom Trichter
     now = time.time()
     state["watch"] = {}
+    is_muster = P(name, "source") == "muster"
     for c in candidates:
         a = c["addr"]
+        if bool(c.get("only_muster")) != is_muster:
+            continue      # Muster-Kandidaten nur für den Muster-Bot, Trichter-Kandidaten nur für die anderen
         if c["age_d"] < BOTS[name]["min_age_days"]:
             continue
-        if a in state["open"] or state["cooldown"].get(a, 0) > now or LOSERS.get(a, 0) > now:
+        if a in state["open"] or state["cooldown"].get(a, 0) > now or (LOSERS.get(a, 0) > now and not P(name, "ignore_losers")):
             continue
         if c["mc"] < P(name, "min_mc") or c.get("liq", 0) < c["mc"] * P(name, "min_liq_mc"):
             continue
@@ -249,6 +264,8 @@ def update_watch(name, state, candidates):
             continue
         state["watch"][a] = {"sym": c["sym"], "age_d": round(c["age_d"], 1), "mc": c["mc"],
                              "cluster": c.get("cluster")}
+        if c.get("muster"):
+            state["watch"][a]["muster"] = c["muster"]
 
 
 # ---------------------------------------------------------------- Handel (Papier)
@@ -416,7 +433,8 @@ def cycle(states, meta):
     for n, s in states.items():
         manage_exits(n, s, prices)
         # Verlierer, die ein anderer Bot gerade gesperrt hat, nicht mehr kaufen
-        s["watch"] = {a: w for a, w in s["watch"].items() if LOSERS.get(a, 0) <= now}
+        if not P(n, "ignore_losers"):
+            s["watch"] = {a: w for a, w in s["watch"].items() if LOSERS.get(a, 0) <= now}
         try_entries(n, s, prices)
         track_after(s, prices, now)
     meta["losers"] = dict(LOSERS)
@@ -511,10 +529,10 @@ def report(states):
 
 # ---------------------------------------------------------------- Dashboard
 CSS = """
-:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;--d:#13897c;--e:#c2417a;--f:#5f7d1f;
+:root{--bg:#f6f7f9;--card:#ffffff;--fg:#14171c;--muted:#5c6470;--line:#e2e5ea;--a:#2f6fd6;--b:#d9822b;--c:#8a4fc7;--d:#13897c;--e:#c2417a;--f:#5f7d1f;--g:#8c6d1f;
 --good:#1f8a5b;--bad:#c4413b;--chip:#eef1f5;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--fg:#e8eaed;--muted:#99a1ad;--line:#2a3039;
---a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--d:#3cc7b6;--e:#f07aa8;--f:#a6cf5a;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
+--a:#6ea2ff;--b:#f0a35a;--c:#b98af0;--d:#3cc7b6;--e:#f07aa8;--f:#a6cf5a;--g:#e0b84f;--good:#4cc38a;--bad:#ef6b63;--chip:#222831;color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 .wrap{max-width:980px;margin:0 auto;padding:20px 16px 40px}
 header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:16px}
@@ -631,12 +649,12 @@ def equity_chart(meta):
     parts.append('</g>')
     parts.append(f'<text x="{L}" y="{H - 6}">{berlin(x0):%d.%m. %H:%M}</text>'
                  f'<text x="{W - R}" y="{H - 6}" text-anchor="end">{berlin(x1):%d.%m. %H:%M}</text>')
-    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)", "var(--f)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)", "var(--f)", "var(--g)"]
     for i, _ in enumerate(BOTS):
         pts = " ".join(f"{X(h[0]):.1f},{Y(h[i + 1]):.1f}" for h in hist if len(h) > i + 1)
-        parts.append(f'<polyline fill="none" stroke="{colors[i % 6]}" stroke-width="2" points="{pts}"/>')
+        parts.append(f'<polyline fill="none" stroke="{colors[i % 7]}" stroke-width="2" points="{pts}"/>')
         last = hist[-1]
-        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 6]}"/>')
+        parts.append(f'<circle cx="{X(last[0]):.1f}" cy="{Y(last[i + 1]):.1f}" r="3.5" fill="{colors[i % 7]}"/>')
     parts.append('</svg>')
     return "".join(parts)
 
@@ -682,13 +700,13 @@ def bot_filters(n):
 
 def write_dashboard(states, meta, prices):
     now = time.time()
-    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)", "var(--f)"]
+    colors = ["var(--a)", "var(--b)", "var(--c)", "var(--d)", "var(--e)", "var(--f)", "var(--g)"]
     cards = []
     for i, (n, s) in enumerate(states.items()):
         x = summary(s, prices)
         rate = f"{x['rate']:.0f} %" if x["rate"] is not None else "–"
         cards.append(
-            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 6]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
+            f'<div class="card"><h3><span class="dot" style="background:{colors[i % 7]}"></span>{html.escape(BOTS[n]["label"])}</h3>'
             f'<div class="big">{x["equity"]:.2f} $</div><div>{pct(x["ret"])} seit Start ({START_BALANCE:.0f} $)</div>'
             f'<div class="kv"><span>Trades</span><span>{x["n"]}</span>'
             f'<span>Trefferquote</span><span>{rate} <span class="muted small">(Ziel über 56 %)</span></span>'
