@@ -804,7 +804,7 @@ def write_dashboard(states, meta, prices):
 <title>Fomo-Bot Dashboard</title><style>{CSS}</style></head><body><div class="wrap">
 <header><h1>Fomo-Bot · Papier-Test</h1>
 <span class="small muted" id="upd" data-ts="{int(last_run)}">Letzte Runde: {berlin(last_run):%d.%m.%Y %H:%M} Uhr</span>
-<a class="small" href="wallets.html">Smart-Wallets →</a></header>
+<span><a class="small" href="radar.html"><b>Einstiegs-Radar →</b></a> · <a class="small" href="wallets.html">Smart-Wallets →</a></span></header>
 {run_box()}
 <div class="grid">{''.join(cards)}</div>
 <h2>Kontoverlauf</h2><div class="card">{equity_chart(meta)}</div>

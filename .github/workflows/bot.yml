@@ -27,6 +27,7 @@ jobs:
         env:
           HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "fomo-bot"
           git config user.email "fomo-bot@users.noreply.github.com"
@@ -48,6 +49,8 @@ jobs:
             i=$((i + 1))
             timeout 300 python3 fomo_bot.py once || echo "Runde $i mit Fehler"
             if [ $((i % 10)) -eq 0 ]; then save; fi
+            # Einstiegs-Radar etwa alle 30 Minuten anstoßen (GitHubs Zeitplan ist unzuverlässig)
+            if [ $((i % 30)) -eq 15 ]; then gh workflow run radar.yml --ref main >/dev/null 2>&1 || true; fi
             wait=$(( 60 - ( $(date +%s) - start ) ))
             if [ "$wait" -gt 0 ]; then sleep "$wait"; fi
           done

@@ -1,0 +1,50 @@
+name: Einstiegs-Radar
+
+# Etwa alle 30 Minuten (angestoßen vom Bot-Lauf, Zeitplan nur als Reserve) oder auf Knopfdruck:
+# Smart-Money, Bot-Historie, Muster und Live-Daten zu einer Ampel je Coin zusammenführen.
+on:
+  schedule:
+    - cron: "23,53 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - name: Bestände der Smart-Wallets auffrischen (höchstens alle 3 Stunden)
+        env:
+          HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+        run: |
+          if python3 -c "import json,time,sys; d=json.load(open('wallet_holdings.json')); sys.exit(0 if time.time()-d.get('t',0) > 3*3600 else 1)"; then
+            timeout 900 python3 wallet_holdings.py || echo "Bestände nicht aktualisiert"
+          fi
+      - name: Radar
+        env:
+          HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python3 radar.py
+      - name: Ergebnis speichern
+        run: |
+          git config user.name "fomo-bot"
+          git config user.email "fomo-bot@users.noreply.github.com"
+          mkdir -p /tmp/out/docs
+          cp radar.json cluster_cache_radar.json wallet_holdings.json /tmp/out/ 2>/dev/null || true
+          cp docs/radar.html /tmp/out/docs/
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp -r /tmp/out/. .
+            git add radar.json cluster_cache_radar.json wallet_holdings.json docs/radar.html 2>/dev/null || true
+            git commit -q -m "Radar $(date -u +%d.%m.%H:%M) UTC" || exit 0
+            if git push -q origin HEAD:main; then exit 0; fi
+            sleep 15
+          done
+          exit 1
