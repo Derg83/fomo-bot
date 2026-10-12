@@ -58,3 +58,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run bot.yml --ref main
+
+      # GitHubs Zeitplan ist unzuverlässig: die Neben-Abläufe werden von hier mit angestoßen
+      - name: Neben-Ablaeufe anstossen
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run rueckblick.yml --ref main || true
+          last=$(gh run list --workflow wallets.yml --limit 1 --json createdAt -q '.[0].createdAt' 2>/dev/null || echo "")
+          if [ -z "$last" ] || [ $(( $(date +%s) - $(date -d "$last" +%s) )) -gt 72000 ]; then
+            gh workflow run wallets.yml --ref main || true
+            gh workflow run rueckblick-wallets.yml --ref main || true
+          fi
