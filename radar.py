@@ -40,6 +40,7 @@ MC_MAX = 3_000_000          # darüber kaum Luft (Coin-Check: über 3 Mio. 0 von
 MAX_CANDLES = 22            # so viele sichere Coins pro Lauf mit Kursverlauf prüfen (GeckoTerminal-Limit)
 OK_STAGES = (None, "Handel", "Timing")
 GREEN, YELLOW, GREY = 55, 40, 25
+FALL_H1 = -8                # 1 h unter -8 % = fällt gerade (kein Grün, erst Boden abwarten)
 PUMP_H1 = 10                # 1 h über +10 % = gerade im Pump
 STOP_MIN, STOP_MAX = 0.15, 0.30
 HOLDINGS_MAX_AGE_H = 6      # ältere Bestandsdaten zählen nicht
@@ -310,8 +311,11 @@ def main():
         pumping = c["ch1"] > PUMP_H1 or c.get("out_at") == "Timing"
         if a in losers:
             light = "gesperrt"
-        elif total >= GREEN and not pumping:
+        elif total >= GREEN and not pumping and c["ch1"] >= FALL_H1:
             light = "grün"
+        elif total >= GREEN and not pumping:
+            light = "grau"
+            notes.append(f"fällt gerade ({c['ch1']:+.0f} % in 1 h) – erst Boden abwarten")
         elif total >= YELLOW and pumping:
             light = "gelb"
         elif total >= GREY:
@@ -492,7 +496,7 @@ Hälfte bei +{round(TP1 * 100)} %, Rest bis +{res['tp_default']} % (Coin-Check) 
 <h2>So entsteht die Ampel</h2><div class="note">Nur Coins, die Contract-, Holder- und Cluster-Check bestehen, bekommen Punkte (max. 100):
 Smart-Money bis 30 (gute Pool-Wallet kauft +15, weitere +8, hält +5) · Rückblick-Muster 25 bzw. CLAUDIA-Profil 5 je Check ·
 Basis-Muster bis 20 · Markt-Qualität bis 15 · Bot-Historie +5 / −20 (Verlust-Sperre).
-<b>Grün</b> ab {GREEN} Punkten und nicht mitten im Pump (1 h ≤ +{PUMP_H1} %), <b>Gelb</b> ab {YELLOW} Punkten, aber pumpt gerade, <b>Grau</b> ab {GREY}.
+<b>Grün</b> ab {GREEN} Punkten, nicht mitten im Pump und nicht im freien Fall (1 h zwischen {FALL_H1} % und +{PUMP_H1} %), <b>Gelb</b> ab {YELLOW} Punkten, aber pumpt gerade, <b>Grau</b> ab {GREY}.
 Stop und Ziel kommen aus Hoch/Tief aller Bot-Trades und dem Coin-Check. Das ist kein Kaufsignal und keine Anlageberatung,
 sondern die Auswertung unserer eigenen Regeln. Kleine gleiche Einsätze, Stop direkt als Order, nie im Fall nachkaufen.</div>
 <footer>Aktualisiert sich etwa alle 30 Minuten. Bei neuem Grün kommt eine Push-Nachricht (wenn ntfy eingerichtet ist).</footer>
