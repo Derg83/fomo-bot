@@ -3,6 +3,8 @@ name: Rueckblick-Frueh-Kaeufer
 # Auf Knopfdruck: Wer hat bei den Gewinner-Coins VOR dem Lauf gekauft? Bewertet die Wallets und
 # übernimmt sie in den Wallet-Pool (läuft nie gleichzeitig mit dem Wallet-Sammler).
 on:
+  schedule:
+    - cron: "10 6 * * *"      # täglich nach dem Wallet-Sammler
   workflow_dispatch:
 
 permissions:
@@ -29,20 +31,22 @@ jobs:
       - name: Früh-Käufer suchen und bewerten
         env:
           HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
-        run: python3 rueckblick_wallets.py
+        run: |
+          python3 rueckblick_wallets.py
+          python3 rueckblick_wallets.py radar
       - name: Ergebnis speichern
         if: always()
         run: |
           git config user.name "fomo-bot"
           git config user.email "fomo-bot@users.noreply.github.com"
           mkdir -p /tmp/out
-          for f in wallets.json wallet_pool.csv docs/wallets.html rueckblick/frueh_kaeufer.json; do
+          for f in wallets.json wallet_pool.csv docs/wallets.html rueckblick/frueh_kaeufer.json rueckblick/radar_frueh.json; do
             [ -f "$f" ] && mkdir -p "/tmp/out/$(dirname $f)" && cp "$f" "/tmp/out/$f"
           done
           for i in 1 2 3 4 5 6; do
             git fetch -q origin main && git reset -q --hard origin/main
             cp -r /tmp/out/. .
-            git add wallets.json wallet_pool.csv docs/wallets.html rueckblick/frueh_kaeufer.json 2>/dev/null || true
+            git add wallets.json wallet_pool.csv docs/wallets.html rueckblick/frueh_kaeufer.json rueckblick/radar_frueh.json 2>/dev/null || true
             git commit -q -m "Früh-Käufer der Gewinner $(date -u +%d.%m.%H:%M) UTC" || exit 0
             if git push -q origin HEAD:main; then echo "gespeichert"; exit 0; fi
             sleep 20

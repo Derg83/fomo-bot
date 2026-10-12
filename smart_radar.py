@@ -34,6 +34,12 @@ GOOD_MIN_USD = 150            # eine gute Wallet reicht ab diesem Kaufbetrag
 SEEN_MAX = 4000               # so viele Transaktions-IDs merken (keine Doppelzählung)
 SIGNALS_KEEP_H = 72           # Signale so lange für das Dashboard merken
 GT = "https://api.geckoterminal.com/api/v2/networks/solana"
+# Käufer-Log: alle größeren Käufer der Radar-Coins merken. Läuft ein Coin später 3x, wissen wir,
+# wer VOR dem Lauf gekauft hat (Auswertung in rueckblick_wallets.py, Modus "radar").
+BUYERS_FILE = os.path.join(HERE, "rueckblick", "kaeufer.json")
+BUYER_MIN_USD = 200           # Käufe ab 200 $ merken
+BUYERS_PER_COIN = 400         # höchstens so viele Käufer pro Coin (die frühesten bleiben)
+BUYERS_KEEP_D = 10            # Coins so lange im Log behalten
 
 
 def log(msg):
@@ -123,6 +129,7 @@ def tick(meta, priority=(), budget_s=25):
             todo.append(m)
     r["cursor"] = i % max(1, len(order))
     start = time.time()
+    buyers_log = _load_buyers()
     for m in todo:
         if time.time() - start > budget_s:
             break
@@ -133,6 +140,7 @@ def tick(meta, priority=(), budget_s=25):
             log(f"Trades ${p['sym']}: {e}")
             time.sleep(2.1)
             continue
+        _log_buyers(buyers_log, m, p, rows, now)
         for row in rows:
             a = row.get("attributes") or {}
             w, h = a.get("tx_from_address"), a.get("tx_hash")
@@ -160,9 +168,60 @@ def tick(meta, priority=(), budget_s=25):
             log(f"{'KAUF' if kind == 'buy' else 'VERKAUF'} Smart-Wallet {w[:4]}…{w[-4:]} ${p['sym']} "
                 f"{usd:.0f} $  CA: {m}")
         time.sleep(2.1)
+    _save_buyers(buyers_log, now)
     r["seen"] = r["seen"][-SEEN_MAX:]
     cut = now - SIGNALS_KEEP_H * 3600
     r["signals"] = {m: s for m, s in r["signals"].items() if s.get("last", 0) >= cut}
+
+
+def _load_buyers():
+    try:
+        with open(BUYERS_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _log_buyers(log_, mint, p, rows, now):
+    """Erster Kauf (Zeit, Kurs) und Summe je Wallet für diesen Coin."""
+    c = log_.setdefault(mint, {"sym": p["sym"], "b": {}})
+    c["seen"] = now
+    b = c["b"]
+    for row in rows:
+        a = row.get("attributes") or {}
+        if a.get("to_token_address") != mint:
+            continue
+        usd = float(a.get("volume_in_usd") or 0)
+        w = a.get("tx_from_address")
+        if usd < BUYER_MIN_USD or not w:
+            continue
+        try:
+            t = calendar.timegm(time.strptime(a["block_timestamp"], "%Y-%m-%dT%H:%M:%SZ"))
+            price = float(a.get("price_to_in_usd") or 0)
+        except Exception:
+            continue
+        if w in b:
+            if t < b[w][0]:
+                b[w][0], b[w][2] = t, price
+            continue          # Summe nicht doppelt zählen (dieselben Trades kommen mehrfach)
+        if len(b) >= BUYERS_PER_COIN and t >= max(x[0] for x in b.values()):
+            continue
+        b[w] = [t, round(usd), price]
+        if len(b) > BUYERS_PER_COIN:
+            del b[max(b, key=lambda k: b[k][0])]
+
+
+def _save_buyers(log_, now):
+    cut = now - BUYERS_KEEP_D * 86400
+    log_ = {m: c for m, c in log_.items() if c.get("seen", now) >= cut}
+    try:
+        os.makedirs(os.path.dirname(BUYERS_FILE), exist_ok=True)
+        tmp = BUYERS_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(log_, f, separators=(",", ":"))
+        os.replace(tmp, BUYERS_FILE)
+    except Exception as e:
+        log(f"Käufer-Log: {e}")
 
 
 def active_signals(meta):

@@ -157,5 +157,73 @@ def main():
     log(f"Fertig: {scored} bewertet, {len(pool)} davon im Pool, {rpc.used:,} Credits verbraucht.")
 
 
+def radar_mode():
+    """Aus dem Käufer-Log des Radars: Wer hat Coins gekauft, die danach 3x gemacht haben?"""
+    key = os.environ.get("HELIUS_API_KEY", "").strip()
+    try:
+        with open(os.path.join(HERE, "rueckblick", "kaeufer.json"), encoding="utf-8") as f:
+            buyers = json.load(f)
+    except Exception:
+        log("Noch kein Käufer-Log vorhanden.")
+        return
+    with gzip.open(COINS, "rt", encoding="utf-8") as f:
+        coins = json.load(f)["coins"]
+    stats = {}
+    checked_coins = 0
+    for m, c in buyers.items():
+        hist = (coins.get(m) or {}).get("ohlcv")
+        if not hist:
+            continue
+        checked_coins += 1
+        end_t = hist[-1][0]
+        for w, (t0, usd, p0) in c["b"].items():
+            if not p0 or t0 + 24 * 3600 > end_t:
+                continue      # noch nicht genug Zukunft
+            after = [r[4] for r in hist if t0 < r[0] <= t0 + 72 * 3600]
+            if not after:
+                continue
+            mx, mn = max(after) / p0, min(after) / p0
+            st = stats.setdefault(w, {"hits": 0, "misses": 0, "coins": {}})
+            if mx >= 3:
+                st["hits"] += 1
+                st["coins"][m] = {"sym": c["sym"], "mult": round(mx, 1), "usd": usd}
+            elif mx < 1.5 and mn <= 0.6:
+                st["misses"] += 1
+    cands = [(w, v) for w, v in stats.items()
+             if v["hits"] >= 2 or (v["hits"] >= 1 and v["hits"] / (v["hits"] + v["misses"]) >= 0.5 and v["hits"] + v["misses"] >= 2)]
+    cands.sort(key=lambda x: (-x[1]["hits"], x[1]["misses"]))
+    log(f"Käufer-Log: {checked_coins} Coins mit Kursdaten, {len(stats)} Wallets, {len(cands)} Kandidaten")
+    data = wc.load()
+    if key and cands:
+        rpc = wc.Rpc(key, data)
+        rpc.gtfa = data.get("gtfa", True)
+        for n, (w, v) in enumerate(cands[:SCORE_MAX], 1):
+            if rpc.credits_left() < CREDIT_RESERVE:
+                break
+            e = data["wallets"].setdefault(w, {"addr": w, "first_seen": time.time(), "coins": {}, "status": "Neu"})
+            for m in v["coins"]:
+                e["coins"][m] = "Radar-Früh"
+            if not (e.get("checked") and time.time() - e["checked"] < 3 * 86400):
+                try:
+                    wc.evaluate(rpc, e, data)
+                except SystemExit:
+                    raise
+                except Exception as ex:
+                    e.update(status="Keine Daten", why=f"Fehler: {str(ex)[:100]}", checked=time.time())
+            v["status"], v["why"] = e.get("status"), e.get("why")
+            log(f"  {w[:4]}…{w[-4:]} {v['hits']} Treffer / {v['misses']} Fehlgriffe: {e.get('status')} – {e.get('why', '')}")
+            if n % 10 == 0:
+                wc.save(data)
+        data["gtfa"] = rpc.gtfa
+        wc.save(data)
+        wc.write_page(data)
+    with open(os.path.join(HERE, "rueckblick", "radar_frueh.json"), "w", encoding="utf-8") as f:
+        json.dump({"t": time.time(), "coins": checked_coins, "kandidaten": dict(cands[:300])}, f, indent=1)
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "radar":
+        radar_mode()
+    else:
+        main()
