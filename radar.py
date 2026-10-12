@@ -43,6 +43,7 @@ GREEN, YELLOW, GREY = 55, 40, 25
 PUMP_H1 = 10                # 1 h über +10 % = gerade im Pump
 STOP_MIN, STOP_MAX = 0.15, 0.30
 HOLDINGS_MAX_AGE_H = 6      # ältere Bestandsdaten zählen nicht
+TP1 = 0.20                  # erste Hälfte raus: +20 % (erreichen ca. 15 % der Bot-Trades innerhalb ihrer Haltedauer)
 PUSH_AGAIN_H = 12           # denselben Coin frühestens nach 12 h wieder melden
 
 
@@ -293,7 +294,9 @@ def main():
     counts, final, watch, allc = funnel.run_funnel(coins, funnel.rugcheck_live)
 
     safe = [c for c in allc if c.get("out_at") in OK_STAGES]
-    unsafe_smart = [c for c in allc if c.get("out_at") not in OK_STAGES and (c["addr"] in signals or c["addr"] in hold)]
+    # Smart-Money-Coins, die an echten Risiken scheitern (nicht an "zu klein/zu wenig Volumen" = Staub-Reste)
+    unsafe_smart = [c for c in allc if c.get("out_at") not in OK_STAGES
+                    and (c["addr"] in signals or (c["addr"] in hold and c.get("out_at") != "Markt"))]
     # Kursverläufe: zuerst Coins mit Smart-Money, dann nach Volumen
     safe.sort(key=lambda c: (c["addr"] not in signals and c["addr"] not in hold, -c.get("vol24", 0)))
     rows = []
@@ -319,6 +322,7 @@ def main():
         st_mc = c["mc"] * (1 - stop)
         if shp.get("low12_mc"):
             st_mc = min(max(shp["low12_mc"] * 0.97, c["mc"] * (1 - STOP_MAX)), c["mc"] * (1 - STOP_MIN))
+        tp1_mc = c["mc"] * (1 + TP1)
         tp_mc = c["mc"] * (1 + (1.0 if shp.get("rueckblick") else tp1))
         rows.append({
             "addr": a, "sym": c["sym"], "name": c["name"], "mc": c["mc"], "liq": c["liq"], "vol24": c["vol24"],
@@ -328,8 +332,9 @@ def main():
             "score": total, "parts": parts, "checks": bc, "shape": shp, "notes": notes, "light": light,
             "smart": signals.get(a), "hold": hold.get(a),
             "plan": {"stop_mc": round(st_mc), "stop_pct": round((st_mc / c["mc"] - 1) * 100),
+                     "tp1_mc": round(tp1_mc), "tp1_pct": round(TP1 * 100),
                      "tp_mc": round(tp_mc), "tp_pct": round((tp_mc / c["mc"] - 1) * 100),
-                     "tp_note": "Rückblick-Ziel +100 %" if shp.get("rueckblick") else "Median-Peak kleiner Coins"},
+                     "tp_note": "Rückblick-Ziel" if shp.get("rueckblick") else "Median-Peak kleiner Coins über 1–3 Tage"},
         })
     rows.sort(key=lambda r: -r["score"])
     running = sorted([c for c in allc if c.get("out_at") in OK_STAGES and (c["ch1"] >= 20 or c["ch24"] >= 100)],
@@ -366,7 +371,8 @@ def notify_new(rows, notified):
         p = r["plan"]
         notify.push(f"Radar GRÜN: ${r['sym']} ({r['score']} Pkt.)",
                     f"MC {fmt(r['mc'])} · {r['age_d']} Tage · {'; '.join(r['notes'][:2]) or 'Muster + Sicherheit ok'}\n"
-                    f"Plan: Stop {fmt(p['stop_mc'])} ({p['stop_pct']} %), Ziel {fmt(p['tp_mc'])} (+{p['tp_pct']} %)\n"
+                    f"Plan: Stop {fmt(p['stop_mc'])} ({p['stop_pct']} %), Hälfte bei {fmt(p['tp1_mc'])} (+{p['tp1_pct']} %), "
+                    f"Rest bis {fmt(p['tp_mc'])} (+{p['tp_pct']} %)\n"
                     f"CA {r['addr']}\nKein Kaufsignal, nur unsere Regeln.",
                     click=f"https://dexscreener.com/solana/{r['addr']}", priority=4, tags=["green_circle"])
         notified[r["addr"]] = t
@@ -402,8 +408,8 @@ def card(r):
 <span>1 h / 24 h</span><span>{r['ch1']:+.0f} % / {r['ch24']:+.0f} %</span><span>Käufe/Verk. 24 h</span><span>{r['buys']} / {r['sells']}</span>
 <span>Top-10 / Insider / Cluster</span><span>{r['top10'] or 0:.0f} % / {r['insider'] or 0:.1f} % / {r['cluster'] if r['cluster'] is not None else '–'} %</span></div>
 <div class="bars">{bars}{f'<div class="bar"><span>Bot-Historie</span><b>{bh:+d}</b></div>' if bh else ''}</div>
-<div class="plan"><b>Plan nach unseren Daten:</b> Stop bei MC <b>{fmt(p['stop_mc'])}</b> ({p['stop_pct']} %) ·
-Teilverkauf bei <b>{fmt(p['tp_mc'])}</b> (+{p['tp_pct']} %, {html.escape(p['tp_note'])}) · Rest mit Trailing</div>
+<div class="plan"><b>Plan nach unseren Daten</b> (MC jetzt {fmt(r['mc'])}):<br>Stop bei <b>{fmt(p['stop_mc'])}</b> ({p['stop_pct']} %) ·
+Hälfte raus bei <b>{fmt(p['tp1_mc'])}</b> (+{p['tp1_pct']} %) · Rest bis <b>{fmt(p['tp_mc'])}</b> (+{p['tp_pct']} %, {html.escape(p['tp_note'])}) oder Trailing</div>
 <details><summary>Details</summary><ul class="small">{notes}{warns}</ul>
 <p class="small"><b>Basis-Muster</b></p><ul class="small">{ul(r['checks'])}</ul>
 {f'<p class="small"><b>CLAUDIA-Profil</b></p><ul class="small">{claud}</ul>' if claud else ''}
@@ -453,7 +459,8 @@ def write_page(res):
 <span>erreichten +10 / +20 / +50 / +100 %</span><span>{reach.get(10, '–')} / {reach.get(20, '–')} / {reach.get(50, '–')} / {reach.get(100, '–')} %</span>
 <span>Gewinner fielen vorher bis</span><span>{L.get('winner_dip_median', '–')} % (Median)</span>
 <span>24 h nach Verkauf</span><span>{L.get('after24_median', '–')} % (Median)</span></div>
-<p class="small muted">Daraus: Stop {res['stop_default']} % (Gewinner nicht zu früh rauswerfen), erstes Ziel +{res['tp_default']} %.</p></div>
+<p class="small muted">Daraus: Stop mindestens {res['stop_default']} % bzw. unter dem Tief der letzten 12 h (max. 30 %),
+Hälfte bei +{round(TP1 * 100)} %, Rest bis +{res['tp_default']} % (Coin-Check) bzw. +100 % beim Rückblick-Muster.</p></div>
 <div class="card"><h3>Frühere Coins (Coin-Check)</h3>
 <div class="kv"><span>unter 1 Mio. MC: 1,5x+</span><span>{L.get('small_hit15', '–')}</span>
 <span>Peak im Median (unter 1 Mio.)</span><span>{L.get('small_peak_median', '–')}x</span>
