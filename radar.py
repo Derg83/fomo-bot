@@ -4,13 +4,13 @@ Einstiegs-Radar: alles, was wir haben, zu einer Liste "wo nach unseren Regeln ei
 Quellen
   Live        Trichter (Trending, Boosts, Volumen-Pools) inkl. RugCheck + Cluster-Check
   Smart-Money aktive Kauf-Signale unserer Pool-Wallets (smart_radar) + aktuelle Bestände (wallet_holdings)
-  Muster      Rückblick-Muster (60-92 % unter dem ersten Hoch, 1-14 Tage) + CLAUDIA-Profil + Basis-Muster (6 Checks)
+  Muster      5 Kursbilder mit Punkten aus dem Rückblick-Test + Basis-Muster (6 Checks)
   Bots        Historie je Coin (Gewinne/Verluste, Verlust-Sperre), Hoch/Tief aller Trades -> Stop/Ziel aus Daten
   Vergangenes Coin-Check (wie liefen frühere Coins seit dem ersten Auftauchen)
 
 Punkte (max. 100, nur für sichere Coins = Contract/Holder/Cluster bestanden)
   Smart-Money      bis 30   gute Pool-Wallet kauft gerade +15, weitere Wallet +8, Wallet hält den Coin +5
-  Rückblick/CLAUDIA bis 25  Rückblick-Muster erfüllt 25, sonst CLAUDIA-Profil 5 je Check
+  Kursbild         bis 25   bestes passendes Kursbild (Rücksetzer im Trend 25, Trend nahe Hoch 18, ...)
   Basis-Muster     bis 20   die 6 Checks aus dem Muster-Scan
   Markt-Qualität   bis 15   Liquidität ≥10 % MC, Käufe/Verkäufe ausgewogen, Volumen ≥50 % MC
   Bot-Historie     +5 / -20 Bot hat damit gewonnen / Coin steht auf der Verlust-Sperre
@@ -101,6 +101,9 @@ def learn():
         out["small_hit15"] = f"{sum(c['x_peak'] >= 1.5 for c in small)} von {len(small)}"
     if big:
         out["big_hit15"] = f"{sum(c['x_peak'] >= 1.5 for c in big)} von {len(big)}"
+    sr = load("sicherheit_rueckblick.json", {})
+    if sr.get("summary"):
+        out["safety"] = {"summary": sr["summary"], "cats": sr.get("kategorien") or {}, "n": sr.get("coins")}
     out["top_past"] = sorted([c for c in cc if c.get("x_peak")], key=lambda c: -c["x_peak"])[:6]
     return out
 
@@ -161,38 +164,142 @@ def candles(c):
     return []
 
 
+# Kursbilder mit Punkten aus dem Rückblick-Test (246 Coins, früher/späterer Zeitraum, Stop 30 / Ziel +100, Ø je Trade):
+#   Zufall +14/+6 %, Rücksetzer im Trend +38/+33 %, Trend nahe Hoch +11/+33 %, Seitwärts->Volumen +9/+41 %,
+#   Boden+Volumen (CLAUDIA-Art) +23/+15 %, Boden ohne Volumen +12/+6 %, Pump läuft +13/+4 %.
+#   Achtung: Überlebens-Verzerrung (nur Coins, die noch gehandelt werden) und kleine Stichproben.
+PROFILES = [
+    # (Name, Punkte, Regel auf den Rückblick-Merkmalen)
+    ("Rücksetzer im Aufwärtstrend", 25,
+     lambda f: f["r24"] >= 0.3 and f["r6"] <= -0.10 and 0.45 <= f["dd_ath"] <= 0.85),
+    ("Trend nahe Hoch", 18,
+     lambda f: f["dd_ath"] >= 0.7 and 0.2 <= f["r24"] <= 1.5 and -0.05 <= f["r1"] <= 0.10),
+    ("Seitwärts, dann Volumen", 15,
+     lambda f: abs(f["r24"]) <= 0.15 and f["vol_accel"] >= 2 and 0 <= f["r6"] <= 0.2),
+    ("Boden nach Absturz + Volumen", 15,
+     lambda f: 0.08 <= f["dd_ath"] <= 0.40 and f["h_since_low"] >= 12 and f["vol_accel"] >= 1.5),
+    ("Boden nach Absturz", 8,
+     lambda f: 0.08 <= f["dd_ath"] <= 0.40 and f["h_since_low"] >= 6),
+]
+
+
 def shape(c, rows):
-    """Rückblick-Muster, CLAUDIA-Profil und Boden aus den Stundenkerzen."""
-    if len(rows) < 24 or not rows[-1][4]:
+    """Kursbild aus den Stundenkerzen – gleiche Merkmale wie im Rückblick-Test."""
+    if len(rows) < 30 or not rows[-1][4]:
         return {}
-    sup = c["mc"] / float(rows[-1][4])
-    hi_i = max(range(len(rows)), key=lambda i: rows[i][2])
-    ath = rows[hi_i][2]
-    after = rows[hi_i:]
-    low_i = hi_i + min(range(len(after)), key=lambda i: after[i][3])
-    low = rows[low_i][3]
-    now_p = rows[-1][4]
-    vol6 = sum(r[5] for r in rows[-6:]) / 6
-    vol18 = (sum(r[5] for r in rows[-24:-6]) / 18) or 1e-9
-    low12 = min(r[3] for r in rows[-12:])
-    h_low = (rows[-1][0] - rows[low_i][0]) / 3600
-    dd_now = now_p / ath if ath else 1
-    age_h = c["age_h"]
-    vol_mc = (c.get("vol24") or 0) / c["mc"] if c["mc"] else 0
+    try:
+        import rueckblick_analyse as ra
+        coin = {"supply": c["mc"] / float(rows[-1][4]), "created_min": None,
+                "ohlcv": [[int(r[0])] + [float(x) for x in r[1:6]] for r in rows]}
+        feats = ra.features(coin, ra.series(coin))
+        f = feats[-1] if feats else None
+    except Exception as e:
+        print(f"Kursbild ${c['sym']}: {e}")
+        f = None
+    if not f:
+        return {}
+    low12 = min(r[3] for r in rows[-12:]) * c["mc"] / float(rows[-1][4])
+    hits = [(n, pts) for n, pts, rule in PROFILES if rule(f)]
     s = {
-        "ath_mc": round(ath * sup), "low_mc": round(low * sup), "low12_mc": round(low12 * sup),
-        "now_vs_ath": round(dd_now * 100), "h_since_low": round(h_low), "vol_up": round(vol6 / vol18, 2),
-    }
-    # Rückblick-Muster (muster.py): 60-92 % unter dem Hoch, 1-14 Tage, MC 50k-1,5 Mio., Volumen ≥50 % MC
-    s["rueckblick"] = (0.08 <= dd_now <= 0.40 and 24 <= age_h <= 336 and 50_000 <= c["mc"] <= 1_500_000
-                       and vol_mc >= 0.5)
-    s["claudia"] = {
-        f"erstes Hoch {fmt(s['ath_mc'])}, danach -{round((1 - low / ath) * 100)} %": (1 - low / ath) >= 0.5 if ath else False,
-        f"Boden hält seit {s['h_since_low']} h (≥12 h)": h_low >= 12,
-        f"jetzt {s['now_vs_ath']} % vom Hoch (Luft nach oben)": dd_now < 0.95,
-        f"Volumen 6 h {s['vol_up']}x (≥1,5x)": s["vol_up"] >= 1.5,
+        "ath_mc": round(f["ath_mc"]), "low12_mc": round(low12), "now_vs_ath": round(f["dd_ath"] * 100),
+        "h_since_low": f["h_since_low"], "vol_up": round(f["vol_accel"], 2),
+        "r1": round(f["r1"] * 100), "r6": round(f["r6"] * 100), "r24": round(f["r24"] * 100),
+        "profiles": {n: any(n == h for h, _ in hits) for n, _, _ in PROFILES},
+        "best": max(hits, key=lambda x: x[1]) if hits else None,
+        "pump": f["r1"] >= 0.20,
     }
     return s
+
+
+# ---------------------------------------------------------------- Sicherheit in zwei Stufen
+# Sicherheits-Rückblick (222 Coins mit RugCheck-Daten, sicherheit_rueckblick.json):
+#   durchgefallen 128, davon 49 zwei Tage am Stück über 1 Mio. (38 %) – bestanden 94, davon 31 (33 %)
+#   Insider-Anteil war der häufigste Grund (58) und hatte die meisten 3x-Läufe (39), z. B. pill 202x, SI 68x, HeeHaw 47x
+#   Mint/Freeze aktiv: 18 hielten 1 Mio., aber alles Stablecoins/Aktien-Token, 0 von 27 mit 3x-Lauf
+#   -> K.-o. nur noch für Dinge, mit denen der Dev Käufer direkt ausnehmen kann; Konzentration kostet nur Punkte
+HARD_RISKS = ("creator history of rugged", "copycat", "honeypot")
+DEV_HARD = 15
+LP_HARD = 50              # LP unter 50 % gelockt ist nur bei jungen, kleinen Coins K.-o. (ältere Pools: normal)
+LP_HARD_AGE_H, LP_HARD_MC = 72, 1_000_000
+
+
+def assess(c, rc):
+    """Liefert (K.-o.-Gründe, Warnungen, Punktabzug). Holder-Werte werden auch für Coins berechnet,
+    die schon an der Contract-Stufe hängen geblieben sind."""
+    hard, soft, pen = [], [], 0
+    tok = rc.get("token") or {}
+    if not tok:
+        return ["keine RugCheck-Daten"], [], 0
+    if tok.get("mintAuthority"):
+        hard.append("Mint aktiv (Dev kann neue Coins drucken)")
+    if tok.get("freezeAuthority"):
+        hard.append("Freeze aktiv (Dev kann Wallets einfrieren)")
+    if rc.get("rugged"):
+        hard.append("als gerugged markiert")
+    markets = rc.get("markets") or []
+    main = next((m for m in markets if m.get("pubkey") == c.get("main_pair")), None)
+    if main is None and markets:
+        main = max(markets, key=lambda m: (m.get("lp") or {}).get("quoteUSD") or 0)
+    lp = ((main or {}).get("lp") or {}).get("lpLockedPct")
+    young_small = c.get("age_h", 0) < LP_HARD_AGE_H and c.get("mc", 0) < LP_HARD_MC
+    if lp is not None and lp < LP_HARD and young_small:
+        hard.append(f"LP nur {lp:.0f} % gelockt bei jungem, kleinem Coin (Liquidität kann abgezogen werden)")
+    elif lp is not None and lp < LP_HARD:
+        soft.append(f"LP nur {lp:.0f} % gelockt")
+        pen += 10
+    elif lp is not None and lp < funnel.MIN_LP_LOCKED:
+        soft.append(f"LP {lp:.0f} % gelockt")
+        pen += 5
+    for risk in rc.get("risks") or []:
+        name = (risk.get("name") or "").lower()
+        if risk.get("level") != "danger" or "mint" in name or "freeze" in name or "lp" in name:
+            continue
+        if any(h in name for h in HARD_RISKS):
+            hard.append("RugCheck: " + risk.get("name", ""))
+        else:
+            soft.append("RugCheck: " + risk.get("name", ""))
+            pen += 5
+    if c.get("insider") is None or c.get("top10") is None:
+        tmp = dict(c, warns=[])
+        try:
+            funnel.stage_holder(tmp, rc)
+            c["insider"], c["top10"] = tmp.get("insider"), tmp.get("top10")
+        except Exception:
+            pass
+    ins, top10 = c.get("insider") or 0, c.get("top10") or 0
+    sup = tok.get("supply") or 1
+    dev = (rc.get("creatorBalance") or 0) / sup * 100
+    if dev >= DEV_HARD:
+        hard.append(f"Dev hält {dev:.0f} %")
+    elif dev >= 5:
+        soft.append(f"Dev hält {dev:.0f} %")
+        pen += 10
+    if ins > 100:
+        soft.append("Insider-Daten unplausibel")
+    elif ins >= 35:
+        soft.append(f"Insider halten {ins:.0f} %")
+        pen += 20
+    elif ins >= 20:
+        soft.append(f"Insider halten {ins:.0f} %")
+        pen += 12
+    elif ins >= funnel.INSIDER_FAIL:
+        soft.append(f"Insider halten {ins:.0f} %")
+        pen += 6
+    if top10 >= 70:
+        soft.append(f"Top-10 halten {top10:.0f} %")
+        pen += 15
+    elif top10 >= 50:
+        soft.append(f"Top-10 halten {top10:.0f} %")
+        pen += 8
+    holders = [h for h in rc.get("topHolders") or [] if h.get("owner") not in ({m.get("pubkey") for m in markets} | c.get("pairs", set()))]
+    if funnel.bundle_pattern([h.get("pct") or 0 for h in holders[:10]]):
+        soft.append("Bundle-Muster (Top-Wallets fast gleich groß)")
+        pen += 10
+    cl = c.get("cluster")
+    if cl is not None and cl >= funnel.CLUSTER_FAIL:
+        soft.append(f"Cluster hält {cl:.0f} %")
+        pen += 15 if cl >= 30 else 8
+    return hard, soft, min(pen, 30)
 
 
 def base_checks(c):
@@ -220,14 +327,11 @@ def score(c, sig, hold, hist, locked, shp):
         sm += 5 * hold["n"]
         notes.append(f"{hold['n']} Pool-Wallet(s) halten den Coin")
     parts["Smart-Money"] = min(sm, 30)
-    # Rückblick / CLAUDIA
-    if shp.get("rueckblick"):
-        parts["Rückblick/CLAUDIA"] = 25
-        notes.append("Rückblick-Muster erfüllt (60–92 % unter dem Hoch, Boden)")
-    elif shp.get("claudia"):
-        parts["Rückblick/CLAUDIA"] = 5 * sum(shp["claudia"].values())
-    else:
-        parts["Rückblick/CLAUDIA"] = 0
+    # Kursbild (mehrere Muster, Punkte aus dem Rückblick-Test – kein Einzel-Vorbild)
+    best = (shp or {}).get("best")
+    parts["Kursbild"] = best[1] if best else 0
+    if best:
+        notes.append(f"Kursbild: {best[0]}")
     # Basis-Muster
     bc = base_checks(c)
     parts["Basis-Muster"] = round(sum(bc.values()) / len(bc) * 20)
@@ -245,6 +349,9 @@ def score(c, sig, hold, hist, locked, shp):
         bh += 5
         notes.append(f"Bots: {sum(p > 0 for p in hist['pnl_pct'])} von {len(hist['pnl_pct'])} Trades im Plus")
     parts["Bot-Historie"] = bh
+    if c.get("risk_pen"):
+        parts["Risiko"] = -c["risk_pen"]
+        notes.append("Risiken: " + "; ".join(c.get("risk_soft") or []))
     total = max(0, sum(parts.values()))
     return total, parts, bc, notes
 
@@ -292,12 +399,28 @@ def main():
     coins = [c for c in funnel.market_data(src) if c["mc"] <= MC_MAX]
     print(f"{len(coins)} Coins bis {fmt(MC_MAX)} MC im Eingang")
     use_own_cluster_cache()
-    counts, final, watch, allc = funnel.run_funnel(coins, funnel.rugcheck_live)
+    reports = {}
 
-    safe = [c for c in allc if c.get("out_at") in OK_STAGES]
-    # Smart-Money-Coins, die an echten Risiken scheitern (nicht an "zu klein/zu wenig Volumen" = Staub-Reste)
-    unsafe_smart = [c for c in allc if c.get("out_at") not in OK_STAGES
-                    and (c["addr"] in signals or (c["addr"] in hold and c.get("out_at") != "Markt"))]
+    def rc_cached(a):
+        if a not in reports:
+            reports[a] = funnel.rugcheck_live(a)
+        return reports[a]
+
+    counts, final, watch, allc = funnel.run_funnel(coins, rc_cached)
+
+    # Zweistufige Sicherheit: K.-o. nur bei echten Rug-Gefahren, alles andere = Punktabzug + Warnung
+    safe, unsafe_smart = [], []
+    for c in allc:
+        if c.get("out_at") == "Markt":
+            continue                      # zu klein, zu jung oder kein Volumen – kein Sicherheitsthema
+        hard, soft, pen = assess(c, reports.get(c["addr"]) or {})
+        c["risk_hard"], c["risk_soft"], c["risk_pen"] = hard, soft, pen
+        if hard:
+            if c["addr"] in signals or c["addr"] in hold:
+                c["reasons"] = hard
+                unsafe_smart.append(c)
+        else:
+            safe.append(c)
     # Kursverläufe: zuerst Coins mit Smart-Money, dann nach Volumen
     safe.sort(key=lambda c: (c["addr"] not in signals and c["addr"] not in hold, -c.get("vol24", 0)))
     rows = []
@@ -308,7 +431,7 @@ def main():
             time.sleep(2.5)
         a = c["addr"]
         total, parts, bc, notes = score(c, signals.get(a), hold.get(a), hist.get(a), a in losers, shp)
-        pumping = c["ch1"] > PUMP_H1 or c.get("out_at") == "Timing"
+        pumping = c["ch1"] > PUMP_H1 or bool(funnel.stage_timing(c))
         if a in losers:
             light = "gesperrt"
         elif total >= GREEN and not pumping and c["ch1"] >= FALL_H1:
@@ -327,18 +450,19 @@ def main():
         if shp.get("low12_mc"):
             st_mc = min(max(shp["low12_mc"] * 0.97, c["mc"] * (1 - STOP_MAX)), c["mc"] * (1 - STOP_MIN))
         tp1_mc = c["mc"] * (1 + TP1)
-        tp_mc = c["mc"] * (1 + (1.0 if shp.get("rueckblick") else tp1))
+        tp_mc = c["mc"] * (1 + (1.0 if shp.get("best") else tp1))
         rows.append({
             "addr": a, "sym": c["sym"], "name": c["name"], "mc": c["mc"], "liq": c["liq"], "vol24": c["vol24"],
             "ch1": c["ch1"], "ch24": c["ch24"], "age_d": round(c["age_h"] / 24, 1), "buys": c["buys"],
             "sells": c["sells"], "top10": c.get("top10"), "insider": c.get("insider"), "cluster": c.get("cluster"),
-            "funnel": c.get("out_at") or "bestanden", "warns": c["warns"], "src": c.get("src"),
+            "funnel": "alle Regeln" if not c.get("out_at") else f"weich: {c['out_at']}", "warns": c["warns"],
+            "risk_soft": c.get("risk_soft") or [], "src": c.get("src"),
             "score": total, "parts": parts, "checks": bc, "shape": shp, "notes": notes, "light": light,
             "smart": signals.get(a), "hold": hold.get(a),
             "plan": {"stop_mc": round(st_mc), "stop_pct": round((st_mc / c["mc"] - 1) * 100),
                      "tp1_mc": round(tp1_mc), "tp1_pct": round(TP1 * 100),
                      "tp_mc": round(tp_mc), "tp_pct": round((tp_mc / c["mc"] - 1) * 100),
-                     "tp_note": "Rückblick-Ziel" if shp.get("rueckblick") else "Median-Peak kleiner Coins über 1–3 Tage"},
+                     "tp_note": "Ziel aus dem Rückblick-Test" if shp.get("best") else "Median-Peak kleiner Coins über 1–3 Tage"},
         })
     rows.sort(key=lambda r: -r["score"])
     running = sorted([c for c in allc if c.get("out_at") in OK_STAGES and (c["ch1"] >= 20 or c["ch24"] >= 100)],
@@ -349,8 +473,8 @@ def main():
         "rows": rows,
         "running": [{"addr": c["addr"], "sym": c["sym"], "mc": c["mc"], "ch1": c["ch1"], "ch24": c["ch24"],
                      "age_d": round(c["age_h"] / 24, 1)} for c in running[:10]],
-        "unsafe_smart": [{"addr": c["addr"], "sym": c["sym"], "mc": c["mc"], "why": c["reasons"][:2],
-                          "stage": c.get("out_at")} for c in unsafe_smart],
+        "unsafe_smart": [{"addr": c["addr"], "sym": c["sym"], "mc": c["mc"], "why": c["reasons"][:3],
+                          "stage": "K.-o."} for c in unsafe_smart],
     }
     old = load("radar.json", {})
     res["notified"] = notify_new(rows, old.get("notified") or {})
@@ -398,9 +522,10 @@ def card(r):
     bars = "".join(f'<div class="bar"><span>{html.escape(k)}</span><i style="width:{max(2, v / MAXP[k] * 100):.0f}%"></i><b>{v}</b></div>'
                    for k, v in r["parts"].items() if k in MAXP)
     bh = r["parts"].get("Bot-Historie", 0)
+    rk = r["parts"].get("Risiko", 0)
     notes = "".join(f"<li>{html.escape(n)}</li>" for n in r["notes"])
     warns = "".join(f"<li>⚠️ {html.escape(w)}</li>" for w in r["warns"])
-    claud = ul((r["shape"] or {}).get("claudia") or {})
+    claud = ul((r["shape"] or {}).get("profiles") or {})
     smart_w = ""
     if r.get("smart"):
         smart_w = "".join(f'<code>{w[:4]}…{w[-4:]}</code> ' for w in r["smart"]["wallets"])
@@ -411,17 +536,17 @@ def card(r):
 <div class="kv"><span>MC</span><span>{fmt(r['mc'])}</span><span>Liquidität</span><span>{fmt(r['liq'])} ({r['liq'] / r['mc'] * 100 if r['mc'] else 0:.0f} %)</span>
 <span>1 h / 24 h</span><span>{r['ch1']:+.0f} % / {r['ch24']:+.0f} %</span><span>Käufe/Verk. 24 h</span><span>{r['buys']} / {r['sells']}</span>
 <span>Top-10 / Insider / Cluster</span><span>{r['top10'] or 0:.0f} % / {r['insider'] or 0:.1f} % / {r['cluster'] if r['cluster'] is not None else '–'} %</span></div>
-<div class="bars">{bars}{f'<div class="bar"><span>Bot-Historie</span><b>{bh:+d}</b></div>' if bh else ''}</div>
+<div class="bars">{bars}{f'<div class="bar"><span>Bot-Historie</span><b>{bh:+d}</b></div>' if bh else ''}{f'<div class="bar"><span>Risiko-Abzug</span><b>{rk:+d}</b></div>' if rk else ''}</div>
 <div class="plan"><b>Plan nach unseren Daten</b> (MC jetzt {fmt(r['mc'])}):<br>Stop bei <b>{fmt(p['stop_mc'])}</b> ({p['stop_pct']} %) ·
 Hälfte raus bei <b>{fmt(p['tp1_mc'])}</b> (+{p['tp1_pct']} %) · Rest bis <b>{fmt(p['tp_mc'])}</b> (+{p['tp_pct']} %, {html.escape(p['tp_note'])}) oder Trailing</div>
 <details><summary>Details</summary><ul class="small">{notes}{warns}</ul>
 <p class="small"><b>Basis-Muster</b></p><ul class="small">{ul(r['checks'])}</ul>
-{f'<p class="small"><b>CLAUDIA-Profil</b></p><ul class="small">{claud}</ul>' if claud else ''}
+{f'<p class="small"><b>Kursbilder</b> (1 h {r["shape"].get("r1", 0):+d} %, 6 h {r["shape"].get("r6", 0):+d} %, 24 h {r["shape"].get("r24", 0):+d} %, {r["shape"].get("now_vs_ath", 0)} % vom Hoch)</p><ul class="small">{claud}</ul>' if claud else ''}
 {f'<p class="small"><b>Smart-Wallets:</b> {smart_w}</p>' if smart_w else ''}</details>
 <div class="small">{links(a)}</div></div>"""
 
 
-MAXP = {"Smart-Money": 30, "Rückblick/CLAUDIA": 25, "Basis-Muster": 20, "Markt-Qualität": 15}
+MAXP = {"Smart-Money": 30, "Kursbild": 25, "Basis-Muster": 20, "Markt-Qualität": 15}
 
 CSS_EXTRA = """
 .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -435,6 +560,22 @@ CSS_EXTRA = """
 details summary{cursor:pointer;font-size:13px;color:var(--muted)}
 .stat{font-size:24px;font-weight:700}.note{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px}
 """
+
+
+def safety_card(sf):
+    if not sf:
+        return ""
+    b, d = sf["summary"].get("bestanden", {}), sf["summary"].get("durchgefallen", {})
+    pct = lambda x, n: f"{x} von {n} ({x / n * 100:.0f} %)" if n else "–"
+    cats = "".join(f'<tr><td>{html.escape(k)}</td><td>{v["n"]}</td><td>{v["held_1m_48h"]}</td><td>{v["lauf_3x"]}</td></tr>'
+                   for k, v in sorted(sf["cats"].items(), key=lambda x: -x[1]["n"]))
+    return f"""<div class="card"><h3>Sicherheits-Rückblick ({sf.get('n')} Coins)</h3>
+<div class="kv"><span>bestanden: 2 Tage über 1 Mio.</span><span>{pct(b.get('held_1m_48h', 0), b.get('n', 0))}</span>
+<span>durchgefallen: 2 Tage über 1 Mio.</span><span>{pct(d.get('held_1m_48h', 0), d.get('n', 0))}</span>
+<span>bestanden: 3x-Lauf</span><span>{pct(b.get('lauf_3x', 0), b.get('n', 0))}</span>
+<span>durchgefallen: 3x-Lauf</span><span>{pct(d.get('lauf_3x', 0), d.get('n', 0))}</span></div>
+<div class="scroll"><table><tr><th>Grund</th><th>Coins</th><th>2 T &gt;1 Mio.</th><th>3x-Lauf</th></tr>{cats}</table></div>
+<p class="small muted">RugCheck von heute, nicht vom Zeitpunkt des Laufs; nur Coins, die noch gehandelt werden.</p></div>"""
 
 
 def write_page(res):
@@ -468,7 +609,8 @@ Hälfte bei +{round(TP1 * 100)} %, Rest bis +{res['tp_default']} % (Coin-Check) 
 <div class="card"><h3>Frühere Coins (Coin-Check)</h3>
 <div class="kv"><span>unter 1 Mio. MC: 1,5x+</span><span>{L.get('small_hit15', '–')}</span>
 <span>Peak im Median (unter 1 Mio.)</span><span>{L.get('small_peak_median', '–')}x</span>
-<span>über 3 Mio. MC: 1,5x+</span><span>{L.get('big_hit15', '–')}</span></div></div></div>"""
+<span>über 3 Mio. MC: 1,5x+</span><span>{L.get('big_hit15', '–')}</span></div></div>
+{safety_card(L.get('safety'))}</div>"""
     doc = f"""<!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Einstiegs-Radar</title>
 <style>{CSS}{CSS_EXTRA}</style></head><body><div class="wrap">
@@ -486,7 +628,7 @@ Hälfte bei +{round(TP1 * 100)} %, Rest bis +{res['tp_default']} % (Coin-Check) 
 <div class="card scroll">{'<table><tr><th>Coin</th><th>Punkte</th><th>MC</th><th>1 h / 24 h</th></tr>' + "".join(f'<tr><td><b>${html.escape(r["sym"])}</b><br><code>{r["addr"]}</code></td><td>{r["score"]}</td><td>{fmt(r["mc"])}</td><td>{r["ch1"]:+.0f} % / {r["ch24"]:+.0f} %</td></tr>' for r in by['gesperrt']) + '</table>' if by['gesperrt'] else '<p class="muted">Nichts.</p>'}</div>
 <h2>🚀 Läuft gerade (sicher, aber nicht reinjagen)</h2>
 <div class="card scroll">{'<table><tr><th>Coin</th><th>MC</th><th>1 h</th><th>24 h</th><th>Alter</th><th></th></tr>' + running + '</table>' if running else '<p class="muted">Nichts.</p>'}</div>
-<h2>⛔ Smart-Money kauft, aber unsicher</h2>
+<h2>⛔ Smart-Money kauft, aber K.-o. (Mint/Freeze, Rug-Historie, Dev-Anteil, LP offen bei jungen Coins)</h2>
 <div class="card scroll">{'<table><tr><th>Coin</th><th>MC</th><th>Warum raus</th></tr>' + unsafe + '</table>' if unsafe else '<p class="muted">Nichts.</p>'}</div>
 <h2>📚 Was unsere Daten sagen</h2>{learn_html}
 <h2>Frühere Top-Läufe</h2>
@@ -494,8 +636,12 @@ Hälfte bei +{round(TP1 * 100)} %, Rest bis +{res['tp_default']} % (Coin-Check) 
 <h2>Bots im Vergleich</h2>
 <div class="card scroll"><table><tr><th>Bot</th><th>Trades</th><th>Treffer</th><th>Gewinn</th><th>offen</th></tr>{bots}</table></div>
 <h2>So entsteht die Ampel</h2><div class="note">Nur Coins, die Contract-, Holder- und Cluster-Check bestehen, bekommen Punkte (max. 100):
-Smart-Money bis 30 (gute Pool-Wallet kauft +15, weitere +8, hält +5) · Rückblick-Muster 25 bzw. CLAUDIA-Profil 5 je Check ·
-Basis-Muster bis 20 · Markt-Qualität bis 15 · Bot-Historie +5 / −20 (Verlust-Sperre).
+Smart-Money bis 30 (gute Pool-Wallet kauft +15, weitere +8, hält +5) · Kursbild bis 25 (fünf Muster, Punkte nach Rückblick-Test: Rücksetzer im Aufwärtstrend 25, Trend nahe Hoch 18, Seitwärts→Volumen 15, Boden+Volumen 15, Boden 8) ·
+Basis-Muster bis 20 · Markt-Qualität bis 15 · Bot-Historie +5 / −20 (Verlust-Sperre) · Risiko-Abzug bis −30.
+<b>Sicherheit in zwei Stufen:</b> raus nur bei Mint/Freeze aktiv, Rug-Historie des Devs, Honeypot/Kopie, Dev ab {DEV_HARD} %
+oder LP unter {LP_HARD} % gelockt bei jungen Coins unter 1 Mio. Alles andere (Insider, Top-10, Bundle, Cluster, ältere ungelockte Pools)
+kostet nur Punkte (bis −30) und steht als Warnung auf der Karte. Grund: Im Sicherheits-Rückblick lagen 49 von 128 „durchgefallenen“ Coins
+zwei Tage am Stück über 1 Mio. – genauso oft wie die „sicheren“ – und die Insider-Coins hatten die meisten großen Läufe.
 <b>Grün</b> ab {GREEN} Punkten, nicht mitten im Pump und nicht im freien Fall (1 h zwischen {FALL_H1} % und +{PUMP_H1} %), <b>Gelb</b> ab {YELLOW} Punkten, aber pumpt gerade, <b>Grau</b> ab {GREY}.
 Stop und Ziel kommen aus Hoch/Tief aller Bot-Trades und dem Coin-Check. Das ist kein Kaufsignal und keine Anlageberatung,
 sondern die Auswertung unserer eigenen Regeln. Kleine gleiche Einsätze, Stop direkt als Order, nie im Fall nachkaufen.</div>
