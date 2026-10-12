@@ -1,0 +1,21 @@
+name: Push-Test
+
+# Auf Knopfdruck: schickt eine Test-Nachricht aufs Handy (prüft auch, ob das Secret NTFY_TOPIC eingetragen ist).
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test-Nachricht senden
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          if [ -z "$NTFY_TOPIC" ]; then echo "Secret NTFY_TOPIC fehlt"; exit 1; fi
+          python3 -c "
+          import notify, sys
+          ok = notify.push('Test vom Fomo-Bot', 'Wenn du das liest, kommen ab jetzt alle Signale, Käufe und Verkäufe hier an.\nTippen öffnet Dexscreener (Beispiel: CLAUDIA).', click=notify.dex('2j5SaS7xy776qCBpyPQbZjyQSAtKiFgrwjfErthnW2ZM'), priority=4, tags=['white_check_mark'])
+          print('gesendet' if ok else 'fehlgeschlagen'); sys.exit(0 if ok else 1)"
