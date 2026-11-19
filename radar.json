@@ -1,17 +1,31 @@
 {
- "t": 1795098833.9908967,
- "dauer_s": 303,
+ "t": 1795100921.2211819,
+ "dauer_s": 321,
  "counts": {
-  "Eingang": 140,
-  "Markt": 31,
+  "Eingang": 137,
+  "Markt": 30,
   "Contract": 27,
-  "Holder": 19,
-  "Cluster": 19,
-  "Handel": 19,
-  "Timing": 18
+  "Holder": 16,
+  "Cluster": 16,
+  "Handel": 16,
+  "Timing": 14
  },
  "learn": {
   "bots": {
+   "alle": {
+    "n": 233,
+    "win": 37,
+    "pnl": 2482.46,
+    "open": 2,
+    "cash": 1838.51
+   },
+   "trail": {
+    "n": 307,
+    "win": 30,
+    "pnl": 1340.37,
+    "open": 1,
+    "cash": 1180.83
+   },
    "muster": {
     "n": 63,
     "win": 19,
@@ -26,26 +40,12 @@
     "open": 0,
     "cash": 24.86
    },
-   "trail": {
-    "n": 307,
+   "smart": {
+    "n": 139,
     "win": 30,
-    "pnl": 1340.37,
+    "pnl": -17.51,
     "open": 1,
-    "cash": 1180.83
-   },
-   "alle": {
-    "n": 233,
-    "win": 37,
-    "pnl": 2482.46,
-    "open": 2,
-    "cash": 1838.51
-   },
-   "tempo": {
-    "n": 580,
-    "win": 37,
-    "pnl": 1244.46,
-    "open": 0,
-    "cash": 1274.46
+    "cash": 10.87
    },
    "14tage": {
     "n": 128,
@@ -54,12 +54,12 @@
     "open": 1,
     "cash": 7365.84
    },
-   "smart": {
-    "n": 139,
-    "win": 30,
-    "pnl": -17.51,
-    "open": 1,
-    "cash": 10.87
+   "tempo": {
+    "n": 580,
+    "win": 37,
+    "pnl": 1244.46,
+    "open": 0,
+    "cash": 1274.46
    }
   },
   "trades": 1440,
@@ -221,120 +221,26 @@
  },
  "stop_default": 16,
  "tp_default": 48,
- "holdings_t": 1795087962.569677,
+ "holdings_t": 1795100600.487244,
  "rows": [
-  {
-   "addr": "CUg7AzWL5p8imZVqqdjEPgRhUsXAkBMW5JxkSJ9fpump",
-   "sym": "Huss",
-   "name": "Huss",
-   "mc": 131272,
-   "liq": 26978.46,
-   "vol24": 163263.46,
-   "ch1": -2.89,
-   "ch24": 45.98,
-   "age_d": 2.9,
-   "buys": 1545,
-   "sells": 1390,
-   "top10": 26.082512522859727,
-   "insider": 4.594076818085174,
-   "cluster": 0,
-   "funnel": "alle Regeln",
-   "warns": [],
-   "risk_soft": [],
-   "src": "smart",
-   "score": 60,
-   "parts": {
-    "Smart-Money": 10,
-    "Kursbild": 18,
-    "Basis-Muster": 17,
-    "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": 0
-   },
-   "checks": {
-    "MC 131k (150k\u20131 Mio.)": false,
-    "Alter 2.9 Tage (1,5\u201314)": true,
-    "Liquidit\u00e4t 21 % der MC (\u226510 %)": true,
-    "24 h +46 % (kein Pump)": true,
-    "1 h -3 % (ruhig)": true,
-    "Volumen 124 % der MC (\u226530 %)": true
-   },
-   "shape": {
-    "ath_mc": 182253,
-    "low12_mc": 88532,
-    "now_vs_ath": 72,
-    "h_since_low": 1,
-    "vol_up": 1.85,
-    "r1": 5,
-    "r6": -3,
-    "r24": 72,
-    "profiles": {
-     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
-     "Trend nahe Hoch": true,
-     "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": false,
-     "Boden nach Absturz": false
-    },
-    "best": [
-     "Trend nahe Hoch",
-     18
-    ],
-    "pump": false
-   },
-   "notes": [
-    "2 Pool-Wallet(s) halten den Coin",
-    "Kursbild: Trend nahe Hoch"
-   ],
-   "light": "gr\u00fcn",
-   "smart": null,
-   "hold": {
-    "n": 2,
-    "wallets": [
-     {
-      "wallet": "9haKJiniE7HR5im7b9a74VUGD7vHDu6waBwAdQegwqQm",
-      "usd": 299.62,
-      "pnl10": 2.379,
-      "ohne_top": 0.577,
-      "win": 70.0,
-      "wal": false
-     },
-     {
-      "wallet": "Ah8v8NYkmsrzPEuq6mypoQjzT12GBA7DiFpfdGizXhQT",
-      "usd": 108.8,
-      "pnl10": 0.213,
-      "ohne_top": 0.013,
-      "win": 60.0,
-      "wal": false
-     }
-    ]
-   },
-   "plan": {
-    "stop_mc": 91890,
-    "stop_pct": -30,
-    "tp1_mc": 157526,
-    "tp1_pct": 20,
-    "tp_mc": 262544,
-    "tp_pct": 100,
-    "tp_note": "Ziel aus dem R\u00fcckblick-Test"
-   }
-  },
   {
    "addr": "7Evw4uxTxLGGEFEvXLUNYyc1J7PnFk9EYwTUFagARUX",
    "sym": "ACRUX",
    "name": "Acrux",
-   "mc": 132847,
-   "liq": 24128.21,
-   "vol24": 156574.69,
-   "ch1": 0.97,
-   "ch24": 4.44,
+   "mc": 140465,
+   "liq": 24796.06,
+   "vol24": 153252.09,
+   "ch1": 7.56,
+   "ch24": 3.31,
    "age_d": 1.9,
-   "buys": 1472,
-   "sells": 1164,
-   "top10": 45.70333104218477,
-   "insider": 0.1702964991115507,
+   "buys": 1449,
+   "sells": 1139,
+   "top10": 45.40184248974218,
+   "insider": 0.1703035485554297,
    "cluster": 0,
    "funnel": "alle Regeln",
    "warns": [
-    "Top-10 halten 46 %"
+    "Top-10 halten 45 %"
    ],
    "risk_soft": [],
    "src": "smart",
@@ -347,22 +253,22 @@
     "Bot-Historie": 0
    },
    "checks": {
-    "MC 133k (150k\u20131 Mio.)": false,
+    "MC 140k (150k\u20131 Mio.)": false,
     "Alter 1.9 Tage (1,5\u201314)": true,
     "Liquidit\u00e4t 18 % der MC (\u226510 %)": true,
-    "24 h +4 % (kein Pump)": true,
-    "1 h +1 % (ruhig)": true,
-    "Volumen 118 % der MC (\u226530 %)": true
+    "24 h +3 % (kein Pump)": true,
+    "1 h +8 % (ruhig)": true,
+    "Volumen 109 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 334833,
-    "low12_mc": 99590,
-    "now_vs_ath": 40,
-    "h_since_low": 36,
-    "vol_up": 0.62,
-    "r1": 6,
-    "r6": -21,
-    "r24": 7,
+    "ath_mc": 361632,
+    "low12_mc": 107561,
+    "now_vs_ath": 39,
+    "h_since_low": 37,
+    "vol_up": 0.65,
+    "r1": -1,
+    "r6": -22,
+    "r24": -5,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -392,11 +298,11 @@
    },
    "hold": null,
    "plan": {
-    "stop_mc": 96602,
-    "stop_pct": -27,
-    "tp1_mc": 159416,
+    "stop_mc": 104334,
+    "stop_pct": -26,
+    "tp1_mc": 168558,
     "tp1_pct": 20,
-    "tp_mc": 265694,
+    "tp_mc": 280930,
     "tp_pct": 100,
     "tp_note": "Ziel aus dem R\u00fcckblick-Test"
    }
@@ -405,46 +311,46 @@
    "addr": "ngwxpGYdkauMcxLFrNTKp8qBgK7JV53zVvd7F2spump",
    "sym": "duh",
    "name": "duh",
-   "mc": 186043,
-   "liq": 35331.97,
-   "vol24": 169531.6,
-   "ch1": 3.36,
-   "ch24": -4.03,
-   "age_d": 8.8,
-   "buys": 1618,
-   "sells": 1401,
-   "top10": 26.69911495800929,
+   "mc": 180354,
+   "liq": 34752.18,
+   "vol24": 160846.24,
+   "ch1": 1.81,
+   "ch24": 11.01,
+   "age_d": 8.9,
+   "buys": 1491,
+   "sells": 1368,
+   "top10": 26.702738635118084,
    "insider": 1.765671332536393,
    "cluster": 0,
    "funnel": "alle Regeln",
    "warns": [],
    "risk_soft": [],
    "src": "smart",
-   "score": 53,
+   "score": 48,
    "parts": {
-    "Smart-Money": 10,
+    "Smart-Money": 5,
     "Kursbild": 8,
     "Basis-Muster": 20,
     "Markt-Qualit\u00e4t": 15,
     "Bot-Historie": 0
    },
    "checks": {
-    "MC 186k (150k\u20131 Mio.)": true,
-    "Alter 8.8 Tage (1,5\u201314)": true,
+    "MC 180k (150k\u20131 Mio.)": true,
+    "Alter 8.9 Tage (1,5\u201314)": true,
     "Liquidit\u00e4t 19 % der MC (\u226510 %)": true,
-    "24 h -4 % (kein Pump)": true,
-    "1 h +3 % (ruhig)": true,
-    "Volumen 91 % der MC (\u226530 %)": true
+    "24 h +11 % (kein Pump)": true,
+    "1 h +2 % (ruhig)": true,
+    "Volumen 89 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 473038,
-    "low12_mc": 168225,
-    "now_vs_ath": 39,
-    "h_since_low": 63,
-    "vol_up": 0.87,
-    "r1": 5,
-    "r6": -16,
-    "r24": 17,
+    "ath_mc": 480650,
+    "low12_mc": 170932,
+    "now_vs_ath": 38,
+    "h_since_low": 64,
+    "vol_up": 0.8,
+    "r1": -2,
+    "r6": -17,
+    "r24": 15,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -459,86 +365,83 @@
     "pump": false
    },
    "notes": [
-    "2 Pool-Wallet(s) halten den Coin",
+    "1 Pool-Wallet(s) halten den Coin",
     "Kursbild: Boden nach Absturz"
    ],
    "light": "grau",
    "smart": null,
    "hold": {
-    "n": 2,
+    "n": 1,
     "wallets": [
      {
       "wallet": "4zeVXCXXr4dZ14GqKUZLPFj6adAKd844xGVM92QwfYJZ",
-      "usd": 5590.01,
+      "usd": 4566.66,
       "pnl10": 50.876,
       "ohne_top": -46.446,
       "win": 50.0,
       "wal": true
-     },
-     {
-      "wallet": "9haKJiniE7HR5im7b9a74VUGD7vHDu6waBwAdQegwqQm",
-      "usd": 286.62,
-      "pnl10": 2.379,
-      "ohne_top": 0.577,
-      "win": 70.0,
-      "wal": false
      }
     ]
    },
    "plan": {
-    "stop_mc": 158137,
+    "stop_mc": 153301,
     "stop_pct": -15,
-    "tp1_mc": 223252,
+    "tp1_mc": 216425,
     "tp1_pct": 20,
-    "tp_mc": 372086,
+    "tp_mc": 360708,
     "tp_pct": 100,
     "tp_note": "Ziel aus dem R\u00fcckblick-Test"
    }
   },
   {
-   "addr": "6d9fD5SxvN4DAG4SHQD8pebm8TM6XeSbYezPDjdapump",
-   "sym": "PINO",
-   "name": "Pino",
-   "mc": 432634,
-   "liq": 53426.03,
-   "vol24": 103611.77,
-   "ch1": 8.62,
-   "ch24": 57.9,
-   "age_d": 50.8,
-   "buys": 708,
-   "sells": 720,
-   "top10": 25.29950419119426,
-   "insider": 0.0,
-   "cluster": 0,
-   "funnel": "alle Regeln",
-   "warns": [],
-   "risk_soft": [],
-   "src": "smart",
-   "score": 51,
+   "addr": "2bCCHQadi4QeHWPKG3w13siCyWWQPgkFtniouTqVpump",
+   "sym": "1",
+   "name": "Trump $1 Coin",
+   "mc": 734891,
+   "liq": 82489.12,
+   "vol24": 235239.63,
+   "ch1": 1.72,
+   "ch24": 87.63,
+   "age_d": 34.8,
+   "buys": 2533,
+   "sells": 2170,
+   "top10": 40.91019720768463,
+   "insider": 10.59735016535098,
+   "cluster": null,
+   "funnel": "weich: Holder",
+   "warns": [
+    "Top-10 halten 41 %"
+   ],
+   "risk_soft": [
+    "Insider halten 11 %"
+   ],
+   "src": "boost+smart",
+   "score": 44,
    "parts": {
     "Smart-Money": 5,
     "Kursbild": 18,
-    "Basis-Muster": 13,
+    "Basis-Muster": 17,
     "Markt-Qualit\u00e4t": 10,
-    "Bot-Historie": 5
+    "Bot-Historie": 0,
+    "Risiko": -6
    },
    "checks": {
-    "MC 433k (150k\u20131 Mio.)": true,
-    "Alter 50.8 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 12 % der MC (\u226510 %)": true,
-    "24 h +58 % (kein Pump)": true,
-    "1 h +9 % (ruhig)": true,
-    "Volumen 24 % der MC (\u226530 %)": false
+    "MC 735k (150k\u20131 Mio.)": true,
+    "Alter 34.8 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 11 % der MC (\u226510 %)": true,
+    "24 h +88 % (kein Pump)": true,
+    "1 h +2 % (ruhig)": true,
+    "Volumen 32 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 455823,
-    "low12_mc": 341931,
-    "now_vs_ath": 95,
-    "h_since_low": 1,
-    "vol_up": 0.49,
-    "r1": 6,
-    "r6": 15,
-    "r24": 62,
+    "ath_mc": 963248,
+    "low12_mc": 639029,
+    "now_vs_ath": 76,
+    "h_since_low": 12,
+    "vol_up": 0.52,
+    "r1": 4,
+    "r6": 14,
+    "r24": 74,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": true,
@@ -555,7 +458,7 @@
    "notes": [
     "1 Pool-Wallet(s) halten den Coin",
     "Kursbild: Trend nahe Hoch",
-    "Bots: 2 von 7 Trades im Plus"
+    "Risiken: Insider halten 11 %"
    ],
    "light": "grau",
    "smart": null,
@@ -563,120 +466,37 @@
     "n": 1,
     "wallets": [
      {
-      "wallet": "BgBmttsmMJ77LPMresWREKUeeVBbRYAQdz8aWjfifS88",
-      "usd": 7119.02,
-      "pnl10": 26.701,
-      "ohne_top": -15.838,
-      "win": 60.0,
+      "wallet": "Ew58rptSs81EDh1BCGzdbuZjmowfADzHgf4cNKrgoeNP",
+      "usd": 374.4,
+      "pnl10": 2.845,
+      "ohne_top": -1.667,
+      "win": 40.0,
       "wal": false
      }
     ]
    },
    "plan": {
-    "stop_mc": 331673,
-    "stop_pct": -23,
-    "tp1_mc": 519161,
+    "stop_mc": 619858,
+    "stop_pct": -16,
+    "tp1_mc": 881869,
     "tp1_pct": 20,
-    "tp_mc": 865268,
+    "tp_mc": 1469782,
     "tp_pct": 100,
     "tp_note": "Ziel aus dem R\u00fcckblick-Test"
-   }
-  },
-  {
-   "addr": "CqpUBhhSxHsXbq6AGPKnbxDpWgECUXAVy3BCrwhGpump",
-   "sym": "ber",
-   "name": "ber",
-   "mc": 215227,
-   "liq": 42453.12,
-   "vol24": 176384.53,
-   "ch1": -6.34,
-   "ch24": -40.09,
-   "age_d": 25.9,
-   "buys": 1539,
-   "sells": 1336,
-   "top10": 26.170486689394917,
-   "insider": 1.7373933173376215,
-   "cluster": null,
-   "funnel": "weich: Holder",
-   "warns": [],
-   "risk_soft": [
-    "Bundle-Muster (Top-Wallets fast gleich gro\u00df)"
-   ],
-   "src": "smart",
-   "score": 48,
-   "parts": {
-    "Smart-Money": 30,
-    "Kursbild": 0,
-    "Basis-Muster": 13,
-    "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": 0,
-    "Risiko": -10
-   },
-   "checks": {
-    "MC 215k (150k\u20131 Mio.)": true,
-    "Alter 25.9 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 20 % der MC (\u226510 %)": true,
-    "24 h -40 % (kein Pump)": false,
-    "1 h -6 % (ruhig)": true,
-    "Volumen 82 % der MC (\u226530 %)": true
-   },
-   "shape": {
-    "ath_mc": 759294,
-    "low12_mc": 165303,
-    "now_vs_ath": 28,
-    "h_since_low": 2,
-    "vol_up": 0.54,
-    "r1": -2,
-    "r6": 5,
-    "r24": -41,
-    "profiles": {
-     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
-     "Trend nahe Hoch": false,
-     "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": false,
-     "Boden nach Absturz": false
-    },
-    "best": null,
-    "pump": false
-   },
-   "notes": [
-    "2 Pool-Wallet(s) kaufen gerade (456 $)",
-    "Risiken: Bundle-Muster (Top-Wallets fast gleich gro\u00df)"
-   ],
-   "light": "grau",
-   "smart": {
-    "sym": "ber",
-    "wallets": [
-     "9haKJiniE7HR5im7b9a74VUGD7vHDu6waBwAdQegwqQm",
-     "Ah8v8NYkmsrzPEuq6mypoQjzT12GBA7DiFpfdGizXhQT"
-    ],
-    "good": 2,
-    "usd": 455.56,
-    "t": 1795092301
-   },
-   "hold": null,
-   "plan": {
-    "stop_mc": 160344,
-    "stop_pct": -26,
-    "tp1_mc": 258272,
-    "tp1_pct": 20,
-    "tp_mc": 318536,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
   },
   {
    "addr": "BsbsB3WLq7vbY5En3MBCAsTrcwaCxNKY2Mp5pGuLpump",
    "sym": "GTA",
    "name": "GTA memes",
-   "mc": 208390,
-   "liq": 48491.11,
-   "vol24": 350499.36,
-   "ch1": 14.75,
-   "ch24": -67.74,
+   "mc": 203238,
+   "liq": 47846.05,
+   "vol24": 335855.33,
+   "ch1": -2.11,
+   "ch24": -68.14,
    "age_d": 85.0,
-   "buys": 3834,
-   "sells": 3469,
+   "buys": 3687,
+   "sells": 3390,
    "top10": 19.287317706962668,
    "insider": 1.3489486800728785,
    "cluster": 0,
@@ -684,31 +504,31 @@
    "warns": [],
    "risk_soft": [],
    "src": "smart",
-   "score": 40,
+   "score": 43,
    "parts": {
     "Smart-Money": 30,
     "Kursbild": 0,
-    "Basis-Muster": 10,
+    "Basis-Muster": 13,
     "Markt-Qualit\u00e4t": 15,
     "Bot-Historie": -15
    },
    "checks": {
-    "MC 208k (150k\u20131 Mio.)": true,
+    "MC 203k (150k\u20131 Mio.)": true,
     "Alter 85.0 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 23 % der MC (\u226510 %)": true,
+    "Liquidit\u00e4t 24 % der MC (\u226510 %)": true,
     "24 h -68 % (kein Pump)": false,
-    "1 h +15 % (ruhig)": false,
-    "Volumen 168 % der MC (\u226530 %)": true
+    "1 h -2 % (ruhig)": true,
+    "Volumen 165 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 1611989,
-    "low12_mc": 181220,
+    "ath_mc": 1578680,
+    "low12_mc": 177476,
     "now_vs_ath": 13,
-    "h_since_low": 1,
-    "vol_up": 0.56,
-    "r1": -6,
-    "r6": -36,
-    "r24": -66,
+    "h_since_low": 2,
+    "vol_up": 0.5,
+    "r1": -1,
+    "r6": -26,
+    "r24": -65,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -737,99 +557,97 @@
    },
    "hold": null,
    "plan": {
-    "stop_mc": 175783,
-    "stop_pct": -16,
-    "tp1_mc": 250068,
+    "stop_mc": 172152,
+    "stop_pct": -15,
+    "tp1_mc": 243886,
     "tp1_pct": 20,
-    "tp_mc": 308417,
+    "tp_mc": 300792,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
   },
   {
-   "addr": "4B8CdHPZ8ng1CtMP2Jk2W8wGAwJ5nJnap1deVsz2pump",
-   "sym": "BUTTHOLE",
-   "name": "Butthole",
-   "mc": 305422,
-   "liq": 141551.36,
-   "vol24": 326879.1,
-   "ch1": 1.52,
-   "ch24": 17.49,
-   "age_d": 4.0,
-   "buys": 1546,
-   "sells": 1051,
-   "top10": 21.68840874362914,
-   "insider": 1.1402070616508149,
+   "addr": "TiMSdJrkVwUpeEWJpuqRvHt4wVS7uH77LbNPGGVJXNw",
+   "sym": "timmy",
+   "name": "timmy",
+   "mc": 178410,
+   "liq": 21259.01,
+   "vol24": 161432.81,
+   "ch1": -25.32,
+   "ch24": -44.34,
+   "age_d": 18.9,
+   "buys": 1257,
+   "sells": 1153,
+   "top10": 29.488301880148015,
+   "insider": 0.0,
    "cluster": 0,
    "funnel": "alle Regeln",
    "warns": [],
    "risk_soft": [],
-   "src": "cto+smart",
-   "score": 40,
+   "src": "smart",
+   "score": 38,
    "parts": {
     "Smart-Money": 5,
-    "Kursbild": 15,
-    "Basis-Muster": 20,
+    "Kursbild": 8,
+    "Basis-Muster": 10,
     "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": -15
+    "Bot-Historie": 0
    },
    "checks": {
-    "MC 305k (150k\u20131 Mio.)": true,
-    "Alter 4.0 Tage (1,5\u201314)": true,
-    "Liquidit\u00e4t 46 % der MC (\u226510 %)": true,
-    "24 h +17 % (kein Pump)": true,
-    "1 h +2 % (ruhig)": true,
-    "Volumen 107 % der MC (\u226530 %)": true
+    "MC 178k (150k\u20131 Mio.)": true,
+    "Alter 18.9 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 12 % der MC (\u226510 %)": true,
+    "24 h -44 % (kein Pump)": false,
+    "1 h -25 % (ruhig)": false,
+    "Volumen 90 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 932508,
-    "low12_mc": 173571,
-    "now_vs_ath": 33,
-    "h_since_low": 22,
-    "vol_up": 3.71,
-    "r1": 8,
-    "r6": 40,
-    "r24": 11,
+    "ath_mc": 1553749,
+    "low12_mc": 114816,
+    "now_vs_ath": 11,
+    "h_since_low": 6,
+    "vol_up": 1.16,
+    "r1": -2,
+    "r6": 19,
+    "r24": -53,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
      "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": true,
+     "Boden nach Absturz + Volumen": false,
      "Boden nach Absturz": true
     },
     "best": [
-     "Boden nach Absturz + Volumen",
-     15
+     "Boden nach Absturz",
+     8
     ],
     "pump": false
    },
    "notes": [
     "1 Pool-Wallet(s) halten den Coin",
-    "Kursbild: Boden nach Absturz + Volumen",
-    "auf der Verlust-Sperre (ein Bot hat damit verloren)",
-    "Bots: 1 von 4 Trades im Plus"
+    "Kursbild: Boden nach Absturz"
    ],
-   "light": "gesperrt",
+   "light": "grau",
    "smart": null,
    "hold": {
     "n": 1,
     "wallets": [
      {
-      "wallet": "EAXP53UCwsJjUZrm9b7KNQKePH2TNprBdWUpiq9LJCCm",
-      "usd": 156.15,
-      "pnl10": 0.594,
-      "ohne_top": -0.756,
+      "wallet": "E9F2PYwEiP7ogW213FTYJizZ7qGwrr9rSwL7TN7r5TW7",
+      "usd": 237.51,
+      "pnl10": 5.82,
+      "ohne_top": -1.128,
       "win": 40.0,
       "wal": false
      }
     ]
    },
    "plan": {
-    "stop_mc": 213795,
+    "stop_mc": 124887,
     "stop_pct": -30,
-    "tp1_mc": 366506,
+    "tp1_mc": 214092,
     "tp1_pct": 20,
-    "tp_mc": 610844,
+    "tp_mc": 356820,
     "tp_pct": 100,
     "tp_note": "Ziel aus dem R\u00fcckblick-Test"
    }
@@ -838,16 +656,16 @@
    "addr": "GTBxUiw6wJdmmkCGZgRHLyYxqu1vG4KtRpeox6yDpump",
    "sym": "JEANPHIL",
    "name": "Jean Phil",
-   "mc": 1925261,
-   "liq": 196954.39,
-   "vol24": 135439.25,
-   "ch1": -5.76,
-   "ch24": -15.26,
+   "mc": 1699768,
+   "liq": 184901.46,
+   "vol24": 169328.71,
+   "ch1": -14.82,
+   "ch24": -22.63,
    "age_d": 60.8,
-   "buys": 720,
-   "sells": 452,
-   "top10": 24.124407918161936,
-   "insider": 5.093967933373281,
+   "buys": 901,
+   "sells": 553,
+   "top10": 24.180174007550374,
+   "insider": 5.093967952623558,
    "cluster": 9.53,
    "funnel": "alle Regeln",
    "warns": [
@@ -856,31 +674,698 @@
    ],
    "risk_soft": [],
    "src": "smart",
-   "score": 38,
+   "score": 37,
    "parts": {
-    "Smart-Money": 5,
-    "Kursbild": 8,
-    "Basis-Muster": 10,
+    "Smart-Money": 15,
+    "Kursbild": 0,
+    "Basis-Muster": 7,
     "Markt-Qualit\u00e4t": 10,
     "Bot-Historie": 5
    },
    "checks": {
-    "MC 1.9 Mio. (150k\u20131 Mio.)": false,
+    "MC 1.7 Mio. (150k\u20131 Mio.)": false,
     "Alter 60.8 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 10 % der MC (\u226510 %)": true,
-    "24 h -15 % (kein Pump)": true,
-    "1 h -6 % (ruhig)": true,
-    "Volumen 7 % der MC (\u226530 %)": false
+    "Liquidit\u00e4t 11 % der MC (\u226510 %)": true,
+    "24 h -23 % (kein Pump)": true,
+    "1 h -15 % (ruhig)": false,
+    "Volumen 10 % der MC (\u226530 %)": false
    },
    "shape": {
-    "ath_mc": 6576443,
-    "low12_mc": 1861628,
-    "now_vs_ath": 29,
-    "h_since_low": 18,
-    "vol_up": 0.46,
+    "ath_mc": 6648117,
+    "low12_mc": 1685247,
+    "now_vs_ath": 26,
+    "h_since_low": 0,
+    "vol_up": 1.64,
     "r1": -4,
-    "r6": -8,
-    "r24": -15,
+    "r6": -19,
+    "r24": -23,
+    "profiles": {
+     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
+     "Trend nahe Hoch": false,
+     "Seitw\u00e4rts, dann Volumen": false,
+     "Boden nach Absturz + Volumen": false,
+     "Boden nach Absturz": false
+    },
+    "best": null,
+    "pump": false
+   },
+   "notes": [
+    "3 Pool-Wallet(s) halten den Coin",
+    "Bots: 16 von 46 Trades im Plus"
+   ],
+   "light": "grau",
+   "smart": null,
+   "hold": {
+    "n": 3,
+    "wallets": [
+     {
+      "wallet": "4qrHCLTM1D8phyv7NQ8mmQJsbmFJkFMRyngPvwCpwUzK",
+      "usd": 11246.34,
+      "pnl10": 12.059,
+      "ohne_top": -10.329,
+      "win": 30.0,
+      "wal": true
+     },
+     {
+      "wallet": "9haKJiniE7HR5im7b9a74VUGD7vHDu6waBwAdQegwqQm",
+      "usd": 1030.81,
+      "pnl10": 2.379,
+      "ohne_top": 0.577,
+      "win": 70.0,
+      "wal": false
+     },
+     {
+      "wallet": "Ah8v8NYkmsrzPEuq6mypoQjzT12GBA7DiFpfdGizXhQT",
+      "usd": 749.46,
+      "pnl10": 0.213,
+      "ohne_top": 0.013,
+      "win": 60.0,
+      "wal": false
+     }
+    ]
+   },
+   "plan": {
+    "stop_mc": 1444803,
+    "stop_pct": -15,
+    "tp1_mc": 2039722,
+    "tp1_pct": 20,
+    "tp_mc": 2515657,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "GexThZHgaswpAQ7Fi8QrHFubjPimUNSYhJiAA7XZpump",
+   "sym": "WASTED",
+   "name": "WASTED",
+   "mc": 843017,
+   "liq": 91009.67,
+   "vol24": 775836.82,
+   "ch1": 0.11,
+   "ch24": -53.06,
+   "age_d": 19.9,
+   "buys": 7003,
+   "sells": 6871,
+   "top10": 29.947267503793846,
+   "insider": 6.591819859443867,
+   "cluster": 0,
+   "funnel": "alle Regeln",
+   "warns": [
+    "Insider halten 6.6 %"
+   ],
+   "risk_soft": [],
+   "src": "smart+trending",
+   "score": 33,
+   "parts": {
+    "Smart-Money": 20,
+    "Kursbild": 0,
+    "Basis-Muster": 13,
+    "Markt-Qualit\u00e4t": 15,
+    "Bot-Historie": -15
+   },
+   "checks": {
+    "MC 843k (150k\u20131 Mio.)": true,
+    "Alter 19.9 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 11 % der MC (\u226510 %)": true,
+    "24 h -53 % (kein Pump)": false,
+    "1 h +0 % (ruhig)": true,
+    "Volumen 92 % der MC (\u226530 %)": true
+   },
+   "shape": {
+    "ath_mc": 7943672,
+    "low12_mc": 501662,
+    "now_vs_ath": 11,
+    "h_since_low": 3,
+    "vol_up": 0.64,
+    "r1": -4,
+    "r6": -20,
+    "r24": -49,
+    "profiles": {
+     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
+     "Trend nahe Hoch": false,
+     "Seitw\u00e4rts, dann Volumen": false,
+     "Boden nach Absturz + Volumen": false,
+     "Boden nach Absturz": false
+    },
+    "best": null,
+    "pump": false
+   },
+   "notes": [
+    "1 Pool-Wallet(s) kaufen gerade (160 $)",
+    "1 Pool-Wallet(s) halten den Coin",
+    "auf der Verlust-Sperre (ein Bot hat damit verloren)",
+    "Bots: 9 von 19 Trades im Plus"
+   ],
+   "light": "gesperrt",
+   "smart": {
+    "sym": "WASTED",
+    "wallets": [
+     "DtVW93ZP44qLvxgNbyDUcHhJFEYUxLD8qEEb5bXJKeWx"
+    ],
+    "good": 1,
+    "usd": 159.61,
+    "t": 1795091142
+   },
+   "hold": {
+    "n": 1,
+    "wallets": [
+     {
+      "wallet": "DtVW93ZP44qLvxgNbyDUcHhJFEYUxLD8qEEb5bXJKeWx",
+      "usd": 241.15,
+      "pnl10": 6.334,
+      "ohne_top": 5.018,
+      "win": 100.0,
+      "wal": false
+     }
+    ]
+   },
+   "plan": {
+    "stop_mc": 590112,
+    "stop_pct": -30,
+    "tp1_mc": 1011620,
+    "tp1_pct": 20,
+    "tp_mc": 1247665,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "6d9fD5SxvN4DAG4SHQD8pebm8TM6XeSbYezPDjdapump",
+   "sym": "PINO",
+   "name": "Pino",
+   "mc": 422568,
+   "liq": 52757.91,
+   "vol24": 104883.99,
+   "ch1": 1.18,
+   "ch24": 59.89,
+   "age_d": 50.8,
+   "buys": 713,
+   "sells": 724,
+   "top10": 25.29950419119426,
+   "insider": 0.0,
+   "cluster": 0,
+   "funnel": "alle Regeln",
+   "warns": [],
+   "risk_soft": [],
+   "src": "smart",
+   "score": 33,
+   "parts": {
+    "Smart-Money": 5,
+    "Kursbild": 0,
+    "Basis-Muster": 13,
+    "Markt-Qualit\u00e4t": 10,
+    "Bot-Historie": 5
+   },
+   "checks": {
+    "MC 423k (150k\u20131 Mio.)": true,
+    "Alter 50.8 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 12 % der MC (\u226510 %)": true,
+    "24 h +60 % (kein Pump)": true,
+    "1 h +1 % (ruhig)": true,
+    "Volumen 25 % der MC (\u226530 %)": false
+   },
+   "shape": {
+    "ath_mc": 451826,
+    "low12_mc": 347347,
+    "now_vs_ath": 94,
+    "h_since_low": 2,
+    "vol_up": 0.55,
+    "r1": -5,
+    "r6": 19,
+    "r24": 82,
+    "profiles": {
+     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
+     "Trend nahe Hoch": false,
+     "Seitw\u00e4rts, dann Volumen": false,
+     "Boden nach Absturz + Volumen": false,
+     "Boden nach Absturz": false
+    },
+    "best": null,
+    "pump": false
+   },
+   "notes": [
+    "1 Pool-Wallet(s) halten den Coin",
+    "Bots: 2 von 7 Trades im Plus"
+   ],
+   "light": "grau",
+   "smart": null,
+   "hold": {
+    "n": 1,
+    "wallets": [
+     {
+      "wallet": "BgBmttsmMJ77LPMresWREKUeeVBbRYAQdz8aWjfifS88",
+      "usd": 7057.46,
+      "pnl10": 26.701,
+      "ohne_top": -15.838,
+      "win": 60.0,
+      "wal": false
+     }
+    ]
+   },
+   "plan": {
+    "stop_mc": 336927,
+    "stop_pct": -20,
+    "tp1_mc": 507082,
+    "tp1_pct": 20,
+    "tp_mc": 625401,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "FVzqGqRmr4UH1Fif6dewmwbJ1p4YUZCu8dcw4Efopump",
+   "sym": "HOGE",
+   "name": "Hogecoin",
+   "mc": 1064191,
+   "liq": 129954.1,
+   "vol24": 1240275.38,
+   "ch1": -9.88,
+   "ch24": -26.4,
+   "age_d": 4.3,
+   "buys": 7701,
+   "sells": 6684,
+   "top10": 14.976948497998224,
+   "insider": 25.56525006514213,
+   "cluster": null,
+   "funnel": "weich: Holder",
+   "warns": [],
+   "risk_soft": [
+    "Insider halten 26 %"
+   ],
+   "src": "boost+smart",
+   "score": 30,
+   "parts": {
+    "Smart-Money": 10,
+    "Kursbild": 0,
+    "Basis-Muster": 17,
+    "Markt-Qualit\u00e4t": 15,
+    "Bot-Historie": 0,
+    "Risiko": -12
+   },
+   "checks": {
+    "MC 1.1 Mio. (150k\u20131 Mio.)": false,
+    "Alter 4.3 Tage (1,5\u201314)": true,
+    "Liquidit\u00e4t 12 % der MC (\u226510 %)": true,
+    "24 h -26 % (kein Pump)": true,
+    "1 h -10 % (ruhig)": true,
+    "Volumen 117 % der MC (\u226530 %)": true
+   },
+   "shape": {
+    "ath_mc": 2127269,
+    "low12_mc": 751221,
+    "now_vs_ath": 50,
+    "h_since_low": 27,
+    "vol_up": 0.53,
+    "r1": 17,
+    "r6": 1,
+    "r24": -11,
+    "profiles": {
+     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
+     "Trend nahe Hoch": false,
+     "Seitw\u00e4rts, dann Volumen": false,
+     "Boden nach Absturz + Volumen": false,
+     "Boden nach Absturz": false
+    },
+    "best": null,
+    "pump": false
+   },
+   "notes": [
+    "2 Pool-Wallet(s) halten den Coin",
+    "Risiken: Insider halten 26 %"
+   ],
+   "light": "grau",
+   "smart": null,
+   "hold": {
+    "n": 2,
+    "wallets": [
+     {
+      "wallet": "Ew58rptSs81EDh1BCGzdbuZjmowfADzHgf4cNKrgoeNP",
+      "usd": 1118.0,
+      "pnl10": 2.845,
+      "ohne_top": -1.667,
+      "win": 40.0,
+      "wal": false
+     },
+     {
+      "wallet": "D52cAAwVcFSf4CYqRAiDbvKgvCuQW4xLRngMDAWmkkWJ",
+      "usd": 1089.79,
+      "pnl10": 3.0,
+      "ohne_top": 1.781,
+      "win": 90.0,
+      "wal": false
+     }
+    ]
+   },
+   "plan": {
+    "stop_mc": 744934,
+    "stop_pct": -30,
+    "tp1_mc": 1277029,
+    "tp1_pct": 20,
+    "tp_mc": 1575003,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "Fp4JkqEcKYKBKhb9iMu9NSDeo71HWgq2q9QtXaaKpump",
+   "sym": "paws",
+   "name": "paws at you",
+   "mc": 427624,
+   "liq": 69405.75,
+   "vol24": 195271.38,
+   "ch1": -4.46,
+   "ch24": -27.97,
+   "age_d": 23.5,
+   "buys": 1349,
+   "sells": 1404,
+   "top10": 23.300102240332066,
+   "insider": 21.29957103209771,
+   "cluster": null,
+   "funnel": "weich: Holder",
+   "warns": [],
+   "risk_soft": [
+    "Insider halten 21 %"
+   ],
+   "src": "smart",
+   "score": 30,
+   "parts": {
+    "Smart-Money": 10,
+    "Kursbild": 0,
+    "Basis-Muster": 17,
+    "Markt-Qualit\u00e4t": 10,
+    "Bot-Historie": 5,
+    "Risiko": -12
+   },
+   "checks": {
+    "MC 428k (150k\u20131 Mio.)": true,
+    "Alter 23.5 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 16 % der MC (\u226510 %)": true,
+    "24 h -28 % (kein Pump)": true,
+    "1 h -4 % (ruhig)": true,
+    "Volumen 46 % der MC (\u226530 %)": true
+   },
+   "shape": {
+    "ath_mc": 1526806,
+    "low12_mc": 381976,
+    "now_vs_ath": 28,
+    "h_since_low": 1,
+    "vol_up": 1.39,
+    "r1": 6,
+    "r6": -23,
+    "r24": -26,
+    "profiles": {
+     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
+     "Trend nahe Hoch": false,
+     "Seitw\u00e4rts, dann Volumen": false,
+     "Boden nach Absturz + Volumen": false,
+     "Boden nach Absturz": false
+    },
+    "best": null,
+    "pump": false
+   },
+   "notes": [
+    "2 Pool-Wallet(s) halten den Coin",
+    "Bots: 1 von 3 Trades im Plus",
+    "Risiken: Insider halten 21 %"
+   ],
+   "light": "grau",
+   "smart": null,
+   "hold": {
+    "n": 2,
+    "wallets": [
+     {
+      "wallet": "9haKJiniE7HR5im7b9a74VUGD7vHDu6waBwAdQegwqQm",
+      "usd": 335.98,
+      "pnl10": 2.379,
+      "ohne_top": 0.577,
+      "win": 70.0,
+      "wal": false
+     },
+     {
+      "wallet": "Ah8v8NYkmsrzPEuq6mypoQjzT12GBA7DiFpfdGizXhQT",
+      "usd": 180.73,
+      "pnl10": 0.213,
+      "ohne_top": 0.013,
+      "win": 60.0,
+      "wal": false
+     }
+    ]
+   },
+   "plan": {
+    "stop_mc": 363480,
+    "stop_pct": -15,
+    "tp1_mc": 513149,
+    "tp1_pct": 20,
+    "tp_mc": 632884,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "CqpUBhhSxHsXbq6AGPKnbxDpWgECUXAVy3BCrwhGpump",
+   "sym": "ber",
+   "name": "ber",
+   "mc": 189776,
+   "liq": 39766.22,
+   "vol24": 179031.59,
+   "ch1": -12.85,
+   "ch24": -48.85,
+   "age_d": 26.0,
+   "buys": 1590,
+   "sells": 1345,
+   "top10": 26.170486689394917,
+   "insider": 1.7373933173376215,
+   "cluster": null,
+   "funnel": "weich: Holder",
+   "warns": [],
+   "risk_soft": [
+    "Bundle-Muster (Top-Wallets fast gleich gro\u00df)"
+   ],
+   "src": "smart",
+   "score": 30,
+   "parts": {
+    "Smart-Money": 15,
+    "Kursbild": 0,
+    "Basis-Muster": 10,
+    "Markt-Qualit\u00e4t": 15,
+    "Bot-Historie": 0,
+    "Risiko": -10
+   },
+   "checks": {
+    "MC 190k (150k\u20131 Mio.)": true,
+    "Alter 26.0 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 21 % der MC (\u226510 %)": true,
+    "24 h -49 % (kein Pump)": false,
+    "1 h -13 % (ruhig)": false,
+    "Volumen 94 % der MC (\u226530 %)": true
+   },
+   "shape": {
+    "ath_mc": 746030,
+    "low12_mc": 162415,
+    "now_vs_ath": 25,
+    "h_since_low": 3,
+    "vol_up": 0.56,
+    "r1": -1,
+    "r6": -14,
+    "r24": -47,
+    "profiles": {
+     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
+     "Trend nahe Hoch": false,
+     "Seitw\u00e4rts, dann Volumen": false,
+     "Boden nach Absturz + Volumen": false,
+     "Boden nach Absturz": false
+    },
+    "best": null,
+    "pump": false
+   },
+   "notes": [
+    "1 Pool-Wallet(s) kaufen gerade (170 $)",
+    "Risiken: Bundle-Muster (Top-Wallets fast gleich gro\u00df)"
+   ],
+   "light": "grau",
+   "smart": {
+    "sym": "ber",
+    "wallets": [
+     "Ah8v8NYkmsrzPEuq6mypoQjzT12GBA7DiFpfdGizXhQT"
+    ],
+    "good": 1,
+    "usd": 170.09,
+    "t": 1795092301
+   },
+   "hold": null,
+   "plan": {
+    "stop_mc": 157543,
+    "stop_pct": -17,
+    "tp1_mc": 227731,
+    "tp1_pct": 20,
+    "tp_mc": 280868,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "9QT8K685Hrae4k11dhGXirdtpfAaimExtyfwt8cPpump",
+   "sym": "DIGS",
+   "name": "AiDiglet",
+   "mc": 440377,
+   "liq": 67649.97,
+   "vol24": 1103575.21,
+   "ch1": 10.29,
+   "ch24": 26.75,
+   "age_d": 22.1,
+   "buys": 17997,
+   "sells": 12123,
+   "top10": 14.728026548014693,
+   "insider": 222.29508302517957,
+   "cluster": null,
+   "funnel": "weich: Holder",
+   "warns": [],
+   "risk_soft": [
+    "Insider-Daten unplausibel"
+   ],
+   "src": "boost",
+   "score": 28,
+   "parts": {
+    "Smart-Money": 0,
+    "Kursbild": 0,
+    "Basis-Muster": 13,
+    "Markt-Qualit\u00e4t": 15,
+    "Bot-Historie": 0
+   },
+   "checks": {
+    "MC 440k (150k\u20131 Mio.)": true,
+    "Alter 22.1 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 15 % der MC (\u226510 %)": true,
+    "24 h +27 % (kein Pump)": true,
+    "1 h +10 % (ruhig)": false,
+    "Volumen 251 % der MC (\u226530 %)": true
+   },
+   "shape": {},
+   "notes": [],
+   "light": "grau",
+   "smart": null,
+   "hold": null,
+   "plan": {
+    "stop_mc": 371678,
+    "stop_pct": -16,
+    "tp1_mc": 528452,
+    "tp1_pct": 20,
+    "tp_mc": 651758,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "64Uf4fkAWepSjBF8QKWdftHjtgKb2FG6gZsgmx6Fpump",
+   "sym": "FNDR",
+   "name": "Founder Official ",
+   "mc": 147028,
+   "liq": 31732.4,
+   "vol24": 2653596.34,
+   "ch1": -29.02,
+   "ch24": 473,
+   "age_d": 0.6,
+   "buys": 32875,
+   "sells": 22658,
+   "top10": 22.85502763473504,
+   "insider": 2.0547327275568237,
+   "cluster": 0,
+   "funnel": "weich: Timing",
+   "warns": [],
+   "risk_soft": [],
+   "src": "smart+trending",
+   "score": 27,
+   "parts": {
+    "Smart-Money": 5,
+    "Kursbild": 0,
+    "Basis-Muster": 7,
+    "Markt-Qualit\u00e4t": 15,
+    "Bot-Historie": 0
+   },
+   "checks": {
+    "MC 147k (150k\u20131 Mio.)": false,
+    "Alter 0.6 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 22 % der MC (\u226510 %)": true,
+    "24 h +473 % (kein Pump)": false,
+    "1 h -29 % (ruhig)": false,
+    "Volumen 1805 % der MC (\u226530 %)": true
+   },
+   "shape": {},
+   "notes": [
+    "1 Pool-Wallet(s) halten den Coin"
+   ],
+   "light": "grau",
+   "smart": null,
+   "hold": {
+    "n": 1,
+    "wallets": [
+     {
+      "wallet": "Am4xwcESgg7hL4ZWjFMiGTz3pwvDZtbf7hqv9RgFfbve",
+      "usd": 100.94,
+      "pnl10": 13.202,
+      "ohne_top": 1.202,
+      "win": 50.0,
+      "wal": false
+     }
+    ]
+   },
+   "plan": {
+    "stop_mc": 124092,
+    "stop_pct": -16,
+    "tp1_mc": 176434,
+    "tp1_pct": 20,
+    "tp_mc": 217601,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "9a13W5HdqE95g3YE8Dk9wCHPucrCH33h6BTfdFvRpump",
+   "sym": "plumber",
+   "name": "plumber",
+   "mc": 131642,
+   "liq": 35390.51,
+   "vol24": 531255.63,
+   "ch1": 3.79,
+   "ch24": 15.95,
+   "age_d": 6.7,
+   "buys": 3711,
+   "sells": 2919,
+   "top10": 17.73187914016309,
+   "insider": 59.5750289905905,
+   "cluster": null,
+   "funnel": "weich: Holder",
+   "warns": [],
+   "risk_soft": [
+    "Insider halten 60 %"
+   ],
+   "src": "smart",
+   "score": 25,
+   "parts": {
+    "Smart-Money": 5,
+    "Kursbild": 8,
+    "Basis-Muster": 17,
+    "Markt-Qualit\u00e4t": 15,
+    "Bot-Historie": 0,
+    "Risiko": -20
+   },
+   "checks": {
+    "MC 132k (150k\u20131 Mio.)": false,
+    "Alter 6.7 Tage (1,5\u201314)": true,
+    "Liquidit\u00e4t 27 % der MC (\u226510 %)": true,
+    "24 h +16 % (kein Pump)": true,
+    "1 h +4 % (ruhig)": true,
+    "Volumen 404 % der MC (\u226530 %)": true
+   },
+   "shape": {
+    "ath_mc": 634981,
+    "low12_mc": 100520,
+    "now_vs_ath": 21,
+    "h_since_low": 37,
+    "vol_up": 0.11,
+    "r1": 0,
+    "r6": -3,
+    "r24": 21,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -897,7 +1382,7 @@
    "notes": [
     "1 Pool-Wallet(s) halten den Coin",
     "Kursbild: Boden nach Absturz",
-    "Bots: 16 von 46 Trades im Plus"
+    "Risiken: Insider halten 60 %"
    ],
    "light": "grau",
    "smart": null,
@@ -905,213 +1390,72 @@
     "n": 1,
     "wallets": [
      {
-      "wallet": "4qrHCLTM1D8phyv7NQ8mmQJsbmFJkFMRyngPvwCpwUzK",
-      "usd": 12976.07,
-      "pnl10": 12.059,
-      "ohne_top": -10.329,
-      "win": 30.0,
-      "wal": true
+      "wallet": "5fnmd42n5VwubZ8sEtat9SJuocQSYitJJumpV6bzBZg4",
+      "usd": 565.56,
+      "pnl10": 7.659,
+      "ohne_top": -19.321,
+      "win": 50.0,
+      "wal": false
      }
     ]
    },
    "plan": {
-    "stop_mc": 1636472,
-    "stop_pct": -15,
-    "tp1_mc": 2310313,
+    "stop_mc": 97504,
+    "stop_pct": -26,
+    "tp1_mc": 157970,
     "tp1_pct": 20,
-    "tp_mc": 3850522,
+    "tp_mc": 263284,
     "tp_pct": 100,
     "tp_note": "Ziel aus dem R\u00fcckblick-Test"
    }
   },
   {
-   "addr": "7ymF66Z6VhgNiwadtVhjTtT6U7iQRpSxeiRrhfufhigh",
-   "sym": "HIGH",
-   "name": "higher.fun",
-   "mc": 226826,
-   "liq": 36393.25,
-   "vol24": 104094.28,
-   "ch1": 0.55,
-   "ch24": -44.18,
-   "age_d": 15.9,
-   "buys": 837,
-   "sells": 628,
-   "top10": 36.14072365691824,
-   "insider": 3.1175392979825642,
-   "cluster": 0,
-   "funnel": "alle Regeln",
-   "warns": [
-    "Top-10 halten 36 %"
-   ],
-   "risk_soft": [],
-   "src": "smart",
-   "score": 33,
-   "parts": {
-    "Smart-Money": 10,
-    "Kursbild": 0,
-    "Basis-Muster": 13,
-    "Markt-Qualit\u00e4t": 10,
-    "Bot-Historie": 0
-   },
-   "checks": {
-    "MC 227k (150k\u20131 Mio.)": true,
-    "Alter 15.9 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 16 % der MC (\u226510 %)": true,
-    "24 h -44 % (kein Pump)": false,
-    "1 h +1 % (ruhig)": true,
-    "Volumen 46 % der MC (\u226530 %)": true
-   },
-   "shape": {
-    "ath_mc": 3836480,
-    "low12_mc": 145677,
-    "now_vs_ath": 6,
-    "h_since_low": 1,
-    "vol_up": 1.28,
-    "r1": 34,
-    "r6": 2,
-    "r24": -34,
-    "profiles": {
-     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
-     "Trend nahe Hoch": false,
-     "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": false,
-     "Boden nach Absturz": false
-    },
-    "best": null,
-    "pump": true
-   },
-   "notes": [
-    "2 Pool-Wallet(s) halten den Coin"
-   ],
-   "light": "grau",
-   "smart": null,
-   "hold": {
-    "n": 2,
-    "wallets": [
-     {
-      "wallet": "DtVW93ZP44qLvxgNbyDUcHhJFEYUxLD8qEEb5bXJKeWx",
-      "usd": 1187.8,
-      "pnl10": 6.334,
-      "ohne_top": 5.018,
-      "win": 100.0,
-      "wal": false
-     },
-     {
-      "wallet": "FPx2BavA7J2C7Nz6WpoPL9f5kDAKjxLb38PHNZMoxCra",
-      "usd": 325.61,
-      "pnl10": 17.776,
-      "ohne_top": 2.893,
-      "win": 30.0,
-      "wal": false
-     }
-    ]
-   },
-   "plan": {
-    "stop_mc": 158778,
-    "stop_pct": -30,
-    "tp1_mc": 272191,
-    "tp1_pct": 20,
-    "tp_mc": 335702,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
-   }
-  },
-  {
-   "addr": "9QT8K685Hrae4k11dhGXirdtpfAaimExtyfwt8cPpump",
-   "sym": "DIGS",
-   "name": "AiDiglet",
-   "mc": 397056,
-   "liq": 64171.52,
-   "vol24": 1113019.18,
-   "ch1": -1.49,
-   "ch24": 12.14,
-   "age_d": 22.1,
-   "buys": 18561,
-   "sells": 12331,
-   "top10": 14.728026548014693,
-   "insider": 222.29508302517957,
+   "addr": "nxPqZ4F7ux8Vph5NFu25rEP6Kx9Gr1U6Fmj36Rjpump",
+   "sym": "Dacity",
+   "name": "Dacity Coin",
+   "mc": 142816,
+   "liq": 64742.5,
+   "vol24": 679437.25,
+   "ch1": -12.24,
+   "ch24": -66.56,
+   "age_d": 39.2,
+   "buys": 5773,
+   "sells": 5709,
+   "top10": 13.745028794655287,
+   "insider": 43.18334395905213,
    "cluster": null,
    "funnel": "weich: Holder",
    "warns": [],
    "risk_soft": [
-    "Insider-Daten unplausibel"
+    "Insider halten 43 %"
    ],
-   "src": "boost",
-   "score": 32,
-   "parts": {
-    "Smart-Money": 0,
-    "Kursbild": 0,
-    "Basis-Muster": 17,
-    "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": 0
-   },
-   "checks": {
-    "MC 397k (150k\u20131 Mio.)": true,
-    "Alter 22.1 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 16 % der MC (\u226510 %)": true,
-    "24 h +12 % (kein Pump)": true,
-    "1 h -1 % (ruhig)": true,
-    "Volumen 280 % der MC (\u226530 %)": true
-   },
-   "shape": {},
-   "notes": [],
-   "light": "grau",
-   "smart": null,
-   "hold": null,
-   "plan": {
-    "stop_mc": 335115,
-    "stop_pct": -16,
-    "tp1_mc": 476467,
-    "tp1_pct": 20,
-    "tp_mc": 587643,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
-   }
-  },
-  {
-   "addr": "TiMSdJrkVwUpeEWJpuqRvHt4wVS7uH77LbNPGGVJXNw",
-   "sym": "timmy",
-   "name": "timmy",
-   "mc": 171734,
-   "liq": 20861.16,
-   "vol24": 158183.13,
-   "ch1": -21.26,
-   "ch24": -49.3,
-   "age_d": 18.9,
-   "buys": 1238,
-   "sells": 1134,
-   "top10": 29.559905037660272,
-   "insider": 0.0,
-   "cluster": 0,
-   "funnel": "alle Regeln",
-   "warns": [],
-   "risk_soft": [],
    "src": "smart",
-   "score": 30,
+   "score": 22,
    "parts": {
-    "Smart-Money": 5,
+    "Smart-Money": 20,
     "Kursbild": 0,
-    "Basis-Muster": 10,
+    "Basis-Muster": 7,
     "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": 0
+    "Bot-Historie": 0,
+    "Risiko": -20
    },
    "checks": {
-    "MC 172k (150k\u20131 Mio.)": true,
-    "Alter 18.9 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 12 % der MC (\u226510 %)": true,
-    "24 h -49 % (kein Pump)": false,
-    "1 h -21 % (ruhig)": false,
-    "Volumen 92 % der MC (\u226530 %)": true
+    "MC 143k (150k\u20131 Mio.)": false,
+    "Alter 39.2 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 45 % der MC (\u226510 %)": true,
+    "24 h -67 % (kein Pump)": false,
+    "1 h -12 % (ruhig)": false,
+    "Volumen 476 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 1471649,
-    "low12_mc": 108749,
-    "now_vs_ath": 12,
-    "h_since_low": 5,
-    "vol_up": 2.44,
-    "r1": -16,
-    "r6": -10,
-    "r24": -46,
+    "ath_mc": 11354567,
+    "low12_mc": 128074,
+    "now_vs_ath": 1,
+    "h_since_low": 1,
+    "vol_up": 0.44,
+    "r1": 1,
+    "r6": -40,
+    "r24": -62,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -1123,283 +1467,62 @@
     "pump": false
    },
    "notes": [
-    "1 Pool-Wallet(s) halten den Coin"
+    "1 Pool-Wallet(s) kaufen gerade (188 $)",
+    "1 Pool-Wallet(s) halten den Coin",
+    "Risiken: Insider halten 43 %"
    ],
-   "light": "grau",
-   "smart": null,
+   "light": "kein Signal",
+   "smart": {
+    "sym": "Dacity",
+    "wallets": [
+     "77uFdsGguDTy8oYskMP25nxZ3E6nz6SLkdFWyns2g3CQ"
+    ],
+    "good": 1,
+    "usd": 187.54,
+    "t": 1795098364
+   },
    "hold": {
     "n": 1,
     "wallets": [
      {
-      "wallet": "E9F2PYwEiP7ogW213FTYJizZ7qGwrr9rSwL7TN7r5TW7",
-      "usd": 339.43,
-      "pnl10": 5.82,
-      "ohne_top": -1.128,
-      "win": 40.0,
+      "wallet": "77uFdsGguDTy8oYskMP25nxZ3E6nz6SLkdFWyns2g3CQ",
+      "usd": 186.45,
+      "pnl10": 0.49,
+      "ohne_top": 0.193,
+      "win": 50.0,
       "wal": false
      }
     ]
    },
    "plan": {
-    "stop_mc": 120214,
-    "stop_pct": -30,
-    "tp1_mc": 206081,
+    "stop_mc": 121394,
+    "stop_pct": -15,
+    "tp1_mc": 171379,
     "tp1_pct": 20,
-    "tp_mc": 254166,
+    "tp_mc": 211368,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
   },
   {
-   "addr": "GexThZHgaswpAQ7Fi8QrHFubjPimUNSYhJiAA7XZpump",
-   "sym": "WASTED",
-   "name": "WASTED",
-   "mc": 802205,
-   "liq": 88794.55,
-   "vol24": 783712.4,
-   "ch1": 6.5,
-   "ch24": -56.91,
-   "age_d": 19.8,
-   "buys": 7058,
-   "sells": 6924,
-   "top10": 29.94477125056936,
-   "insider": 6.591819859443867,
+   "addr": "ERDrmaqsoeLdsCMMpBKkRM4LV1mzTA2KHrVxKLpqpump",
+   "sym": "AudaCity",
+   "name": "AudaCity",
+   "mc": 136815,
+   "liq": 34906.32,
+   "vol24": 1638172.05,
+   "ch1": -18.83,
+   "ch24": 190,
+   "age_d": 0.7,
+   "buys": 13548,
+   "sells": 9109,
+   "top10": 28.653369202392724,
+   "insider": 0.1904052892527628,
    "cluster": 0,
    "funnel": "alle Regeln",
-   "warns": [
-    "Insider halten 6.6 %"
-   ],
-   "risk_soft": [],
-   "src": "smart+trending",
-   "score": 28,
-   "parts": {
-    "Smart-Money": 15,
-    "Kursbild": 0,
-    "Basis-Muster": 13,
-    "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": -15
-   },
-   "checks": {
-    "MC 802k (150k\u20131 Mio.)": true,
-    "Alter 19.8 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 11 % der MC (\u226510 %)": true,
-    "24 h -57 % (kein Pump)": false,
-    "1 h +6 % (ruhig)": true,
-    "Volumen 98 % der MC (\u226530 %)": true
-   },
-   "shape": {
-    "ath_mc": 7913051,
-    "low12_mc": 499728,
-    "now_vs_ath": 10,
-    "h_since_low": 2,
-    "vol_up": 0.62,
-    "r1": -7,
-    "r6": -27,
-    "r24": -56,
-    "profiles": {
-     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
-     "Trend nahe Hoch": false,
-     "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": false,
-     "Boden nach Absturz": false
-    },
-    "best": null,
-    "pump": false
-   },
-   "notes": [
-    "1 Pool-Wallet(s) kaufen gerade (160 $)",
-    "auf der Verlust-Sperre (ein Bot hat damit verloren)",
-    "Bots: 9 von 19 Trades im Plus"
-   ],
-   "light": "gesperrt",
-   "smart": {
-    "sym": "WASTED",
-    "wallets": [
-     "DtVW93ZP44qLvxgNbyDUcHhJFEYUxLD8qEEb5bXJKeWx"
-    ],
-    "good": 1,
-    "usd": 159.61,
-    "t": 1795091142
-   },
-   "hold": null,
-   "plan": {
-    "stop_mc": 561544,
-    "stop_pct": -30,
-    "tp1_mc": 962646,
-    "tp1_pct": 20,
-    "tp_mc": 1187263,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
-   }
-  },
-  {
-   "addr": "HZbiEpF2oM658EpjNRRqxharz5L9Ddm8akpSH2R5pump",
-   "sym": "Rocco",
-   "name": "Rocco",
-   "mc": 306311,
-   "liq": 57661.77,
-   "vol24": 668779.57,
-   "ch1": 3.82,
-   "ch24": -66.16,
-   "age_d": 14.0,
-   "buys": 3777,
-   "sells": 3470,
-   "top10": 22.34228716523507,
-   "insider": 15.085889670041308,
-   "cluster": null,
-   "funnel": "weich: Holder",
    "warns": [],
-   "risk_soft": [
-    "Insider halten 15 %"
-   ],
+   "risk_soft": [],
    "src": "cto",
-   "score": 26,
-   "parts": {
-    "Smart-Money": 0,
-    "Kursbild": 0,
-    "Basis-Muster": 17,
-    "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": 0,
-    "Risiko": -6
-   },
-   "checks": {
-    "MC 306k (150k\u20131 Mio.)": true,
-    "Alter 14.0 Tage (1,5\u201314)": true,
-    "Liquidit\u00e4t 19 % der MC (\u226510 %)": true,
-    "24 h -66 % (kein Pump)": false,
-    "1 h +4 % (ruhig)": true,
-    "Volumen 218 % der MC (\u226530 %)": true
-   },
-   "shape": {},
-   "notes": [
-    "Risiken: Insider halten 15 %"
-   ],
-   "light": "grau",
-   "smart": null,
-   "hold": null,
-   "plan": {
-    "stop_mc": 258526,
-    "stop_pct": -16,
-    "tp1_mc": 367573,
-    "tp1_pct": 20,
-    "tp_mc": 453340,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
-   }
-  },
-  {
-   "addr": "FVzqGqRmr4UH1Fif6dewmwbJ1p4YUZCu8dcw4Efopump",
-   "sym": "HOGE",
-   "name": "Hogecoin",
-   "mc": 1059977,
-   "liq": 129703.97,
-   "vol24": 1360921.76,
-   "ch1": -20.92,
-   "ch24": -41.27,
-   "age_d": 4.3,
-   "buys": 8713,
-   "sells": 7239,
-   "top10": 14.976948497998224,
-   "insider": 25.56127824439965,
-   "cluster": null,
-   "funnel": "weich: Holder",
-   "warns": [],
-   "risk_soft": [
-    "Insider halten 26 %"
-   ],
-   "src": "boost+smart",
-   "score": 23,
-   "parts": {
-    "Smart-Money": 10,
-    "Kursbild": 0,
-    "Basis-Muster": 10,
-    "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": 0,
-    "Risiko": -12
-   },
-   "checks": {
-    "MC 1.1 Mio. (150k\u20131 Mio.)": false,
-    "Alter 4.3 Tage (1,5\u201314)": true,
-    "Liquidit\u00e4t 12 % der MC (\u226510 %)": true,
-    "24 h -41 % (kein Pump)": false,
-    "1 h -21 % (ruhig)": false,
-    "Volumen 128 % der MC (\u226530 %)": true
-   },
-   "shape": {
-    "ath_mc": 2488422,
-    "low12_mc": 878758,
-    "now_vs_ath": 43,
-    "h_since_low": 26,
-    "vol_up": 0.5,
-    "r1": -12,
-    "r6": -18,
-    "r24": -27,
-    "profiles": {
-     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
-     "Trend nahe Hoch": false,
-     "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": false,
-     "Boden nach Absturz": false
-    },
-    "best": null,
-    "pump": false
-   },
-   "notes": [
-    "2 Pool-Wallet(s) halten den Coin",
-    "Risiken: Insider halten 26 %"
-   ],
-   "light": "kein Signal",
-   "smart": null,
-   "hold": {
-    "n": 2,
-    "wallets": [
-     {
-      "wallet": "Ew58rptSs81EDh1BCGzdbuZjmowfADzHgf4cNKrgoeNP",
-      "usd": 1272.0,
-      "pnl10": 2.845,
-      "ohne_top": -1.667,
-      "win": 40.0,
-      "wal": false
-     },
-     {
-      "wallet": "D52cAAwVcFSf4CYqRAiDbvKgvCuQW4xLRngMDAWmkkWJ",
-      "usd": 1239.91,
-      "pnl10": 3.0,
-      "ohne_top": 1.781,
-      "win": 90.0,
-      "wal": false
-     }
-    ]
-   },
-   "plan": {
-    "stop_mc": 852395,
-    "stop_pct": -20,
-    "tp1_mc": 1271972,
-    "tp1_pct": 20,
-    "tp_mc": 1568766,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
-   }
-  },
-  {
-   "addr": "64Uf4fkAWepSjBF8QKWdftHjtgKb2FG6gZsgmx6Fpump",
-   "sym": "FNDR",
-   "name": "Founder Official ",
-   "mc": 124719,
-   "liq": 29156.56,
-   "vol24": 2633884.44,
-   "ch1": -23.89,
-   "ch24": 386,
-   "age_d": 0.6,
-   "buys": 32648,
-   "sells": 22394,
-   "top10": 21.867177656463742,
-   "insider": 2.0547327275568237,
-   "cluster": 0,
-   "funnel": "alle Regeln",
-   "warns": [],
-   "risk_soft": [],
-   "src": "trending",
    "score": 22,
    "parts": {
     "Smart-Money": 0,
@@ -1409,12 +1532,12 @@
     "Bot-Historie": 0
    },
    "checks": {
-    "MC 125k (150k\u20131 Mio.)": false,
-    "Alter 0.6 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 23 % der MC (\u226510 %)": true,
-    "24 h +386 % (kein Pump)": false,
-    "1 h -24 % (ruhig)": false,
-    "Volumen 2112 % der MC (\u226530 %)": true
+    "MC 137k (150k\u20131 Mio.)": false,
+    "Alter 0.7 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 26 % der MC (\u226510 %)": true,
+    "24 h +190 % (kein Pump)": false,
+    "1 h -19 % (ruhig)": false,
+    "Volumen 1197 % der MC (\u226530 %)": true
    },
    "shape": {},
    "notes": [],
@@ -1422,186 +1545,195 @@
    "smart": null,
    "hold": null,
    "plan": {
-    "stop_mc": 105263,
+    "stop_mc": 115472,
     "stop_pct": -16,
-    "tp1_mc": 149663,
+    "tp1_mc": 164178,
     "tp1_pct": 20,
-    "tp_mc": 184584,
+    "tp_mc": 202486,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
   },
   {
-   "addr": "2bCCHQadi4QeHWPKG3w13siCyWWQPgkFtniouTqVpump",
-   "sym": "1",
-   "name": "Trump $1 Coin",
-   "mc": 775741,
-   "liq": 84951.88,
-   "vol24": 228065.26,
-   "ch1": 18.77,
-   "ch24": 98.97,
-   "age_d": 34.8,
-   "buys": 2437,
-   "sells": 2117,
-   "top10": 40.91019720768463,
-   "insider": 10.59735016535098,
+   "addr": "HZbiEpF2oM658EpjNRRqxharz5L9Ddm8akpSH2R5pump",
+   "sym": "Rocco",
+   "name": "Rocco",
+   "mc": 334381,
+   "liq": 60715.31,
+   "vol24": 639340.93,
+   "ch1": 20.84,
+   "ch24": -62.86,
+   "age_d": 14.0,
+   "buys": 3623,
+   "sells": 3289,
+   "top10": 22.169965780815264,
+   "insider": 15.085889670041308,
    "cluster": null,
    "funnel": "weich: Holder",
-   "warns": [
-    "Top-10 halten 41 %"
-   ],
+   "warns": [],
    "risk_soft": [
-    "Insider halten 11 %"
+    "Insider halten 15 %"
    ],
-   "src": "boost+smart",
-   "score": 19,
+   "src": "cto",
+   "score": 22,
    "parts": {
-    "Smart-Money": 5,
+    "Smart-Money": 0,
     "Kursbild": 0,
-    "Basis-Muster": 10,
-    "Markt-Qualit\u00e4t": 10,
+    "Basis-Muster": 13,
+    "Markt-Qualit\u00e4t": 15,
     "Bot-Historie": 0,
     "Risiko": -6
    },
    "checks": {
-    "MC 776k (150k\u20131 Mio.)": true,
-    "Alter 34.8 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 11 % der MC (\u226510 %)": true,
-    "24 h +99 % (kein Pump)": true,
-    "1 h +19 % (ruhig)": false,
-    "Volumen 29 % der MC (\u226530 %)": false
+    "MC 334k (150k\u20131 Mio.)": true,
+    "Alter 14.0 Tage (1,5\u201314)": true,
+    "Liquidit\u00e4t 18 % der MC (\u226510 %)": true,
+    "24 h -63 % (kein Pump)": false,
+    "1 h +21 % (ruhig)": false,
+    "Volumen 191 % der MC (\u226530 %)": true
    },
-   "shape": {
-    "ath_mc": 979185,
-    "low12_mc": 633133,
-    "now_vs_ath": 79,
-    "h_since_low": 11,
-    "vol_up": 0.47,
-    "r1": 15,
-    "r6": 19,
-    "r24": 92,
-    "profiles": {
-     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
-     "Trend nahe Hoch": false,
-     "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": false,
-     "Boden nach Absturz": false
-    },
-    "best": null,
-    "pump": false
-   },
+   "shape": {},
    "notes": [
-    "1 Pool-Wallet(s) halten den Coin",
-    "Risiken: Insider halten 11 %"
+    "Risiken: Insider halten 15 %"
    ],
    "light": "kein Signal",
    "smart": null,
-   "hold": {
-    "n": 1,
-    "wallets": [
-     {
-      "wallet": "Ew58rptSs81EDh1BCGzdbuZjmowfADzHgf4cNKrgoeNP",
-      "usd": 649.52,
-      "pnl10": 2.845,
-      "ohne_top": -1.667,
-      "win": 40.0,
-      "wal": false
-     }
-    ]
-   },
+   "hold": null,
    "plan": {
-    "stop_mc": 614139,
-    "stop_pct": -21,
-    "tp1_mc": 930889,
+    "stop_mc": 282218,
+    "stop_pct": -16,
+    "tp1_mc": 401257,
     "tp1_pct": 20,
-    "tp_mc": 1148097,
+    "tp_mc": 494884,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
   },
   {
-   "addr": "7SL2VnfYsChvog5oQY9Nmtqu1wceaMiQzWoqoLQpump",
-   "sym": "NIO",
-   "name": "Nigga Its Over",
-   "mc": 728223,
-   "liq": 99927.47,
-   "vol24": 688266.3,
-   "ch1": 4.9,
-   "ch24": -52.91,
-   "age_d": 28.9,
-   "buys": 4562,
-   "sells": 4492,
-   "top10": 20.952400334862283,
-   "insider": 5.495324242320083,
-   "cluster": 9.8,
-   "funnel": "alle Regeln",
+   "addr": "79rE2ac8JhN3U12QLhymgDmCTiwBN1d4maTcK1fhpump",
+   "sym": "Apocrycoin",
+   "name": "Apocrycoin",
+   "mc": 246597,
+   "liq": 52027.89,
+   "vol24": 5292578.08,
+   "ch1": -32.31,
+   "ch24": 479,
+   "age_d": 1.0,
+   "buys": 45267,
+   "sells": 37787,
+   "top10": 13.979637563406063,
+   "insider": 7.488582777460187,
+   "cluster": 2.1,
+   "funnel": "weich: Timing",
    "warns": [
-    "Insider halten 5.5 %",
-    "Cluster: 4 verbundene Top-Holder halten 9.8 %"
+    "Insider halten 7.5 %"
    ],
    "risk_soft": [],
-   "src": "smart",
-   "score": 18,
+   "src": "smart+trending",
+   "score": 20,
    "parts": {
-    "Smart-Money": 5,
+    "Smart-Money": 10,
     "Kursbild": 0,
-    "Basis-Muster": 13,
+    "Basis-Muster": 10,
     "Markt-Qualit\u00e4t": 15,
     "Bot-Historie": -15
    },
    "checks": {
-    "MC 728k (150k\u20131 Mio.)": true,
-    "Alter 28.9 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 14 % der MC (\u226510 %)": true,
-    "24 h -53 % (kein Pump)": false,
-    "1 h +5 % (ruhig)": true,
-    "Volumen 95 % der MC (\u226530 %)": true
+    "MC 247k (150k\u20131 Mio.)": true,
+    "Alter 1.0 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 21 % der MC (\u226510 %)": true,
+    "24 h +479 % (kein Pump)": false,
+    "1 h -32 % (ruhig)": false,
+    "Volumen 2146 % der MC (\u226530 %)": true
    },
-   "shape": {
-    "ath_mc": 3142976,
-    "low12_mc": 597513,
-    "now_vs_ath": 23,
-    "h_since_low": 3,
-    "vol_up": 0.84,
-    "r1": -11,
-    "r6": -12,
-    "r24": -54,
-    "profiles": {
-     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
-     "Trend nahe Hoch": false,
-     "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": false,
-     "Boden nach Absturz": false
-    },
-    "best": null,
-    "pump": false
-   },
+   "shape": {},
    "notes": [
-    "1 Pool-Wallet(s) halten den Coin",
+    "2 Pool-Wallet(s) halten den Coin",
     "auf der Verlust-Sperre (ein Bot hat damit verloren)",
-    "Bots: 8 von 17 Trades im Plus"
+    "Bots: 1 von 3 Trades im Plus"
    ],
    "light": "gesperrt",
    "smart": null,
    "hold": {
-    "n": 1,
+    "n": 2,
     "wallets": [
      {
-      "wallet": "Ah8v8NYkmsrzPEuq6mypoQjzT12GBA7DiFpfdGizXhQT",
-      "usd": 403.22,
-      "pnl10": 0.213,
-      "ohne_top": 0.013,
-      "win": 60.0,
+      "wallet": "tVB6Vn4q4NXfM7yCMPUPgpA7qK2Ei7GYoSTEqZGvGjE",
+      "usd": 2094.13,
+      "pnl10": 1.556,
+      "ohne_top": -20.056,
+      "win": 50.0,
+      "wal": false
+     },
+     {
+      "wallet": "77uFdsGguDTy8oYskMP25nxZ3E6nz6SLkdFWyns2g3CQ",
+      "usd": 190.0,
+      "pnl10": 0.49,
+      "ohne_top": 0.193,
+      "win": 50.0,
       "wal": false
      }
     ]
    },
    "plan": {
-    "stop_mc": 579588,
-    "stop_pct": -20,
-    "tp1_mc": 873868,
+    "stop_mc": 208128,
+    "stop_pct": -16,
+    "tp1_mc": 295916,
     "tp1_pct": 20,
-    "tp_mc": 1077770,
+    "tp_mc": 364964,
+    "tp_pct": 48,
+    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
+   }
+  },
+  {
+   "addr": "4B8CdHPZ8ng1CtMP2Jk2W8wGAwJ5nJnap1deVsz2pump",
+   "sym": "BUTTHOLE",
+   "name": "Butthole",
+   "mc": 220527,
+   "liq": 114692.47,
+   "vol24": 345961.26,
+   "ch1": -4.24,
+   "ch24": -13.7,
+   "age_d": 4.0,
+   "buys": 1663,
+   "sells": 1126,
+   "top10": 21.15057560227614,
+   "insider": 1.1402070616508149,
+   "cluster": 0,
+   "funnel": "alle Regeln",
+   "warns": [],
+   "risk_soft": [],
+   "src": "cto",
+   "score": 20,
+   "parts": {
+    "Smart-Money": 0,
+    "Kursbild": 0,
+    "Basis-Muster": 20,
+    "Markt-Qualit\u00e4t": 15,
+    "Bot-Historie": -15
+   },
+   "checks": {
+    "MC 221k (150k\u20131 Mio.)": true,
+    "Alter 4.0 Tage (1,5\u201314)": true,
+    "Liquidit\u00e4t 52 % der MC (\u226510 %)": true,
+    "24 h -14 % (kein Pump)": true,
+    "1 h -4 % (ruhig)": true,
+    "Volumen 157 % der MC (\u226530 %)": true
+   },
+   "shape": {},
+   "notes": [
+    "auf der Verlust-Sperre (ein Bot hat damit verloren)",
+    "Bots: 1 von 4 Trades im Plus"
+   ],
+   "light": "gesperrt",
+   "smart": null,
+   "hold": null,
+   "plan": {
+    "stop_mc": 186125,
+    "stop_pct": -16,
+    "tp1_mc": 264632,
+    "tp1_pct": 20,
+    "tp_mc": 326380,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -1610,23 +1742,23 @@
    "addr": "DKYcjobF7HPtL9RyQBRdeRQ2iWvizpfbgWwPWNXdpump",
    "sym": "DacityCoin",
    "name": "AudaCity",
-   "mc": 305779,
-   "liq": 87653.29,
-   "vol24": 7719185.92,
-   "ch1": -20.43,
-   "ch24": -95.46,
-   "age_d": 35.0,
-   "buys": 33443,
-   "sells": 28094,
-   "top10": 36.65881638132866,
-   "insider": 50.83746963711917,
+   "mc": 385416,
+   "liq": 99302.52,
+   "vol24": 7744244.42,
+   "ch1": 13.71,
+   "ch24": -93.88,
+   "age_d": 35.1,
+   "buys": 33628,
+   "sells": 28225,
+   "top10": 36.730011870363356,
+   "insider": 51.57140271439178,
    "cluster": null,
    "funnel": "weich: Holder",
    "warns": [
     "Top-10 halten 37 %"
    ],
    "risk_soft": [
-    "Insider halten 51 %"
+    "Insider halten 52 %"
    ],
    "src": "smart+trending+volumen",
    "score": 15,
@@ -1639,22 +1771,22 @@
     "Risiko": -20
    },
    "checks": {
-    "MC 306k (150k\u20131 Mio.)": true,
-    "Alter 35.0 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 29 % der MC (\u226510 %)": true,
-    "24 h -95 % (kein Pump)": false,
-    "1 h -20 % (ruhig)": false,
-    "Volumen 2524 % der MC (\u226530 %)": true
+    "MC 385k (150k\u20131 Mio.)": true,
+    "Alter 35.1 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 26 % der MC (\u226510 %)": true,
+    "24 h -94 % (kein Pump)": false,
+    "1 h +14 % (ruhig)": false,
+    "Volumen 2009 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 11382324,
-    "low12_mc": 305779,
+    "ath_mc": 11134986,
+    "low12_mc": 298906,
     "now_vs_ath": 3,
-    "h_since_low": 0,
-    "vol_up": 0.38,
-    "r1": -11,
-    "r6": -79,
-    "r24": -95,
+    "h_since_low": 1,
+    "vol_up": 0.35,
+    "r1": -8,
+    "r6": -68,
+    "r24": -81,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -1668,7 +1800,7 @@
    "notes": [
     "1 Pool-Wallet(s) halten den Coin",
     "Bots: 7 von 14 Trades im Plus",
-    "Risiken: Insider halten 51 %"
+    "Risiken: Insider halten 52 %"
    ],
    "light": "kein Signal",
    "smart": null,
@@ -1677,7 +1809,7 @@
     "wallets": [
      {
       "wallet": "Ew58rptSs81EDh1BCGzdbuZjmowfADzHgf4cNKrgoeNP",
-      "usd": 603.06,
+      "usd": 759.08,
       "pnl10": 2.845,
       "ohne_top": -1.667,
       "win": 40.0,
@@ -1686,11 +1818,11 @@
     ]
    },
    "plan": {
-    "stop_mc": 259912,
-    "stop_pct": -15,
-    "tp1_mc": 366935,
+    "stop_mc": 289939,
+    "stop_pct": -25,
+    "tp1_mc": 462499,
     "tp1_pct": 20,
-    "tp_mc": 452553,
+    "tp_mc": 570416,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -1699,16 +1831,16 @@
    "addr": "2xCd5qHX5tW6pGUo7zfgHSSAnRjJwPA7Sz1Fu4fWcJjX",
    "sym": "Mandy",
    "name": "Mandy",
-   "mc": 268032,
-   "liq": 48743.29,
-   "vol24": 1041431.44,
-   "ch1": -16.05,
-   "ch24": 98.7,
+   "mc": 308057,
+   "liq": 52669.69,
+   "vol24": 1011885.84,
+   "ch1": -0.65,
+   "ch24": 143,
    "age_d": 1.1,
-   "buys": 7919,
-   "sells": 5788,
-   "top10": 18.28599682637716,
-   "insider": 1.9658245474550111,
+   "buys": 7763,
+   "sells": 5646,
+   "top10": 17.731996325276242,
+   "insider": 1.987499274835019,
    "cluster": 0,
    "funnel": "alle Regeln",
    "warns": [
@@ -1725,12 +1857,12 @@
     "Bot-Historie": -15
    },
    "checks": {
-    "MC 268k (150k\u20131 Mio.)": true,
+    "MC 308k (150k\u20131 Mio.)": true,
     "Alter 1.1 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 18 % der MC (\u226510 %)": true,
-    "24 h +99 % (kein Pump)": true,
-    "1 h -16 % (ruhig)": false,
-    "Volumen 389 % der MC (\u226530 %)": true
+    "Liquidit\u00e4t 17 % der MC (\u226510 %)": true,
+    "24 h +143 % (kein Pump)": false,
+    "1 h -1 % (ruhig)": true,
+    "Volumen 328 % der MC (\u226530 %)": true
    },
    "shape": {},
    "notes": [
@@ -1741,11 +1873,11 @@
    "smart": null,
    "hold": null,
    "plan": {
-    "stop_mc": 226219,
+    "stop_mc": 260000,
     "stop_pct": -16,
-    "tp1_mc": 321638,
+    "tp1_mc": 369668,
     "tp1_pct": 20,
-    "tp_mc": 396687,
+    "tp_mc": 455924,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -1754,14 +1886,14 @@
    "addr": "FSkyjfqB26u6c2GSgpACrjbxp9yQAR8rutxprVNppump",
    "sym": ":3",
    "name": ":3",
-   "mc": 393024,
-   "liq": 55488.99,
-   "vol24": 442168.27,
-   "ch1": -3.26,
-   "ch24": -39.53,
+   "mc": 396636,
+   "liq": 55718.94,
+   "vol24": 434196.31,
+   "ch1": -0.48,
+   "ch24": -40.68,
    "age_d": 32.9,
-   "buys": 3636,
-   "sells": 3321,
+   "buys": 3584,
+   "sells": 3223,
    "top10": 23.137742836958317,
    "insider": 3.046482205627262,
    "cluster": 0,
@@ -1778,12 +1910,12 @@
     "Bot-Historie": -15
    },
    "checks": {
-    "MC 393k (150k\u20131 Mio.)": true,
+    "MC 397k (150k\u20131 Mio.)": true,
     "Alter 32.9 Tage (1,5\u201314)": false,
     "Liquidit\u00e4t 14 % der MC (\u226510 %)": true,
-    "24 h -40 % (kein Pump)": false,
-    "1 h -3 % (ruhig)": true,
-    "Volumen 113 % der MC (\u226530 %)": true
+    "24 h -41 % (kein Pump)": false,
+    "1 h -0 % (ruhig)": true,
+    "Volumen 109 % der MC (\u226530 %)": true
    },
    "shape": {},
    "notes": [
@@ -1794,59 +1926,61 @@
    "smart": null,
    "hold": null,
    "plan": {
-    "stop_mc": 331712,
+    "stop_mc": 334761,
     "stop_pct": -16,
-    "tp1_mc": 471629,
+    "tp1_mc": 475963,
     "tp1_pct": 20,
-    "tp_mc": 581676,
+    "tp_mc": 587021,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
   },
   {
-   "addr": "5wsjHxT5nW5jQuVupXUNnYszF3WoWCfGGk9LMcsCJzY8",
-   "sym": "STANK",
-   "name": "STANK",
-   "mc": 135928,
-   "liq": 21812.68,
-   "vol24": 334832.49,
-   "ch1": -23.65,
-   "ch24": -81.16,
-   "age_d": 21.0,
-   "buys": 3095,
-   "sells": 2764,
-   "top10": 19.238001542630542,
-   "insider": 0.0,
-   "cluster": 4.99,
+   "addr": "HsprHxBRgiVaQdRf3TnKNuZZtaX9JUSPgMFdAkk6pump",
+   "sym": "GATO",
+   "name": "GTA6CAT",
+   "mc": 1258500,
+   "liq": 123530.09,
+   "vol24": 1556682.83,
+   "ch1": -4.47,
+   "ch24": -72.28,
+   "age_d": 86.1,
+   "buys": 22004,
+   "sells": 14098,
+   "top10": 16.856964737234577,
+   "insider": 2.1332426509777576,
+   "cluster": 0,
    "funnel": "alle Regeln",
-   "warns": [],
+   "warns": [
+    "Liquidit\u00e4t 10 % der MC"
+   ],
    "risk_soft": [],
-   "src": "smart",
+   "src": "smart+trending",
    "score": 12,
    "parts": {
-    "Smart-Money": 5,
+    "Smart-Money": 10,
     "Kursbild": 0,
     "Basis-Muster": 7,
-    "Markt-Qualit\u00e4t": 15,
+    "Markt-Qualit\u00e4t": 10,
     "Bot-Historie": -15
    },
    "checks": {
-    "MC 136k (150k\u20131 Mio.)": false,
-    "Alter 21.0 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 16 % der MC (\u226510 %)": true,
-    "24 h -81 % (kein Pump)": false,
-    "1 h -24 % (ruhig)": false,
-    "Volumen 246 % der MC (\u226530 %)": true
+    "MC 1.3 Mio. (150k\u20131 Mio.)": false,
+    "Alter 86.1 Tage (1,5\u201314)": false,
+    "Liquidit\u00e4t 10 % der MC (\u226510 %)": false,
+    "24 h -72 % (kein Pump)": false,
+    "1 h -4 % (ruhig)": true,
+    "Volumen 124 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 6168840,
-    "low12_mc": 125724,
-    "now_vs_ath": 2,
-    "h_since_low": 1,
-    "vol_up": 1.76,
-    "r1": -19,
-    "r6": -65,
-    "r24": -81,
+    "ath_mc": 14364724,
+    "low12_mc": 784087,
+    "now_vs_ath": 9,
+    "h_since_low": 5,
+    "vol_up": 0.75,
+    "r1": -2,
+    "r6": -18,
+    "r24": -70,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -1858,31 +1992,39 @@
     "pump": false
    },
    "notes": [
-    "1 Pool-Wallet(s) halten den Coin",
+    "2 Pool-Wallet(s) halten den Coin",
     "auf der Verlust-Sperre (ein Bot hat damit verloren)",
-    "Bots: 1 von 6 Trades im Plus"
+    "Bots: 11 von 20 Trades im Plus"
    ],
    "light": "gesperrt",
    "smart": null,
    "hold": {
-    "n": 1,
+    "n": 2,
     "wallets": [
      {
-      "wallet": "H9HFALi2ADjyU3qbxDqxjiafqJk37BA2AnESEew3DoGi",
-      "usd": 1115.58,
-      "pnl10": 27.048,
-      "ohne_top": 2.236,
+      "wallet": "Ah8v8NYkmsrzPEuq6mypoQjzT12GBA7DiFpfdGizXhQT",
+      "usd": 547.75,
+      "pnl10": 0.213,
+      "ohne_top": 0.013,
       "win": 60.0,
+      "wal": false
+     },
+     {
+      "wallet": "9haKJiniE7HR5im7b9a74VUGD7vHDu6waBwAdQegwqQm",
+      "usd": 444.05,
+      "pnl10": 2.379,
+      "ohne_top": 0.577,
+      "win": 70.0,
       "wal": false
      }
     ]
    },
    "plan": {
-    "stop_mc": 115539,
-    "stop_pct": -15,
-    "tp1_mc": 163114,
+    "stop_mc": 880950,
+    "stop_pct": -30,
+    "tp1_mc": 1510200,
     "tp1_pct": 20,
-    "tp_mc": 201173,
+    "tp_mc": 1862580,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -1891,15 +2033,15 @@
    "addr": "5qaP7oKUqKffwwo5DaEqDoTtsBLMpdbQTxEkCDaTpump",
    "sym": "Max",
    "name": "Max coin",
-   "mc": 802851,
-   "liq": 122232.49,
-   "vol24": 618737.38,
-   "ch1": 0.91,
-   "ch24": -52.26,
-   "age_d": 7.7,
-   "buys": 3325,
-   "sells": 3429,
-   "top10": 16.83097338889179,
+   "mc": 787844,
+   "liq": 120999.06,
+   "vol24": 585771.89,
+   "ch1": 0.99,
+   "ch24": -47.85,
+   "age_d": 7.8,
+   "buys": 3222,
+   "sells": 3336,
+   "top10": 16.85992277836065,
    "insider": 4.739529086130765,
    "cluster": 0,
    "funnel": "alle Regeln",
@@ -1915,12 +2057,12 @@
     "Bot-Historie": -20
    },
    "checks": {
-    "MC 803k (150k\u20131 Mio.)": true,
-    "Alter 7.7 Tage (1,5\u201314)": true,
+    "MC 788k (150k\u20131 Mio.)": true,
+    "Alter 7.8 Tage (1,5\u201314)": true,
     "Liquidit\u00e4t 15 % der MC (\u226510 %)": true,
-    "24 h -52 % (kein Pump)": false,
+    "24 h -48 % (kein Pump)": false,
     "1 h +1 % (ruhig)": true,
-    "Volumen 77 % der MC (\u226530 %)": true
+    "Volumen 74 % der MC (\u226530 %)": true
    },
    "shape": {},
    "notes": [
@@ -1930,11 +2072,11 @@
    "smart": null,
    "hold": null,
    "plan": {
-    "stop_mc": 677606,
+    "stop_mc": 664940,
     "stop_pct": -16,
-    "tp1_mc": 963421,
+    "tp1_mc": 945413,
     "tp1_pct": 20,
-    "tp_mc": 1188219,
+    "tp_mc": 1166009,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -1943,16 +2085,16 @@
    "addr": "Bv1a7cEj5aRnJQhMw4kRQqAFesMSd5LwcDnUzq52BMmr",
    "sym": "FLOAT",
    "name": "FLOAT",
-   "mc": 1159133,
-   "liq": 195331.34,
-   "vol24": 440248.48,
-   "ch1": -0.09,
-   "ch24": -41.52,
+   "mc": 1156906,
+   "liq": 195483.29,
+   "vol24": 448143.61,
+   "ch1": -1.43,
+   "ch24": -40.6,
    "age_d": 21.7,
-   "buys": 1374,
-   "sells": 1249,
-   "top10": 30.222700763105898,
-   "insider": 5.816194766025169,
+   "buys": 1388,
+   "sells": 1276,
+   "top10": 30.222701003083685,
+   "insider": 5.816194812207592,
    "cluster": 0,
    "funnel": "alle Regeln",
    "warns": [
@@ -1973,19 +2115,19 @@
     "MC 1.2 Mio. (150k\u20131 Mio.)": false,
     "Alter 21.7 Tage (1,5\u201314)": false,
     "Liquidit\u00e4t 17 % der MC (\u226510 %)": true,
-    "24 h -42 % (kein Pump)": false,
-    "1 h -0 % (ruhig)": true,
-    "Volumen 38 % der MC (\u226530 %)": true
+    "24 h -41 % (kein Pump)": false,
+    "1 h -1 % (ruhig)": true,
+    "Volumen 39 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 17007005,
-    "low12_mc": 1042194,
+    "ath_mc": 16609848,
+    "low12_mc": 1017856,
     "now_vs_ath": 7,
     "h_since_low": 3,
-    "vol_up": 0.66,
-    "r1": -3,
-    "r6": -20,
-    "r24": -43,
+    "vol_up": 0.75,
+    "r1": -1,
+    "r6": -18,
+    "r24": -42,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -2008,7 +2150,7 @@
     "wallets": [
      {
       "wallet": "Am4xwcESgg7hL4ZWjFMiGTz3pwvDZtbf7hqv9RgFfbve",
-      "usd": 628.54,
+      "usd": 653.95,
       "pnl10": 13.202,
       "ohne_top": 1.202,
       "win": 50.0,
@@ -2017,11 +2159,11 @@
     ]
    },
    "plan": {
-    "stop_mc": 985263,
+    "stop_mc": 983370,
     "stop_pct": -15,
-    "tp1_mc": 1390960,
+    "tp1_mc": 1388287,
     "tp1_pct": 20,
-    "tp_mc": 1715517,
+    "tp_mc": 1712221,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -2030,14 +2172,14 @@
    "addr": "A4jXnWk1rDRDth6HmDASi45c89n1AguTHivAQPTVpump",
    "sym": "GTASZN",
    "name": "GTA Season",
-   "mc": 910469,
-   "liq": 77198.68,
-   "vol24": 5517338.33,
-   "ch1": 3.84,
-   "ch24": 798,
+   "mc": 916100,
+   "liq": 77444,
+   "vol24": 5553997.86,
+   "ch1": 21.98,
+   "ch24": 804,
    "age_d": 0.6,
-   "buys": 96046,
-   "sells": 53909,
+   "buys": 99147,
+   "sells": 55412,
    "top10": 15.526917850413462,
    "insider": 0.0,
    "cluster": null,
@@ -2049,21 +2191,21 @@
     "Bundle-Muster (Top-Wallets fast gleich gro\u00df)"
    ],
    "src": "boost+trending",
-   "score": 10,
+   "score": 7,
    "parts": {
     "Smart-Money": 0,
     "Kursbild": 0,
-    "Basis-Muster": 10,
+    "Basis-Muster": 7,
     "Markt-Qualit\u00e4t": 10,
     "Bot-Historie": 0,
     "Risiko": -10
    },
    "checks": {
-    "MC 910k (150k\u20131 Mio.)": true,
+    "MC 916k (150k\u20131 Mio.)": true,
     "Alter 0.6 Tage (1,5\u201314)": false,
     "Liquidit\u00e4t 8 % der MC (\u226510 %)": false,
-    "24 h +798 % (kein Pump)": false,
-    "1 h +4 % (ruhig)": true,
+    "24 h +804 % (kein Pump)": false,
+    "1 h +22 % (ruhig)": false,
     "Volumen 606 % der MC (\u226530 %)": true
    },
    "shape": {},
@@ -2074,152 +2216,11 @@
    "smart": null,
    "hold": null,
    "plan": {
-    "stop_mc": 768436,
+    "stop_mc": 773188,
     "stop_pct": -16,
-    "tp1_mc": 1092563,
+    "tp1_mc": 1099320,
     "tp1_pct": 20,
-    "tp_mc": 1347494,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
-   }
-  },
-  {
-   "addr": "79rE2ac8JhN3U12QLhymgDmCTiwBN1d4maTcK1fhpump",
-   "sym": "Apocrycoin",
-   "name": "Apocrycoin",
-   "mc": 315100,
-   "liq": 58825.19,
-   "vol24": 5251891.39,
-   "ch1": 35.4,
-   "ch24": 640,
-   "age_d": 1.0,
-   "buys": 44942,
-   "sells": 37496,
-   "top10": 13.900221054172436,
-   "insider": 7.464781670759287,
-   "cluster": 2.1,
-   "funnel": "weich: Timing",
-   "warns": [
-    "Insider halten 7.5 %"
-   ],
-   "risk_soft": [],
-   "src": "trending",
-   "score": 10,
-   "parts": {
-    "Smart-Money": 0,
-    "Kursbild": 0,
-    "Basis-Muster": 10,
-    "Markt-Qualit\u00e4t": 15,
-    "Bot-Historie": -15
-   },
-   "checks": {
-    "MC 315k (150k\u20131 Mio.)": true,
-    "Alter 1.0 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 19 % der MC (\u226510 %)": true,
-    "24 h +640 % (kein Pump)": false,
-    "1 h +35 % (ruhig)": false,
-    "Volumen 1667 % der MC (\u226530 %)": true
-   },
-   "shape": {},
-   "notes": [
-    "auf der Verlust-Sperre (ein Bot hat damit verloren)",
-    "Bots: 1 von 3 Trades im Plus"
-   ],
-   "light": "gesperrt",
-   "smart": null,
-   "hold": null,
-   "plan": {
-    "stop_mc": 265944,
-    "stop_pct": -16,
-    "tp1_mc": 378120,
-    "tp1_pct": 20,
-    "tp_mc": 466348,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
-   }
-  },
-  {
-   "addr": "HsprHxBRgiVaQdRf3TnKNuZZtaX9JUSPgMFdAkk6pump",
-   "sym": "GATO",
-   "name": "GTA6CAT",
-   "mc": 1247381,
-   "liq": 123054.07,
-   "vol24": 1572637.9,
-   "ch1": -11.99,
-   "ch24": -72.57,
-   "age_d": 86.1,
-   "buys": 22115,
-   "sells": 14247,
-   "top10": 16.79273456248248,
-   "insider": 2.133242650977498,
-   "cluster": 0,
-   "funnel": "alle Regeln",
-   "warns": [
-    "Liquidit\u00e4t 10 % der MC"
-   ],
-   "risk_soft": [],
-   "src": "smart+trending",
-   "score": 7,
-   "parts": {
-    "Smart-Money": 5,
-    "Kursbild": 0,
-    "Basis-Muster": 7,
-    "Markt-Qualit\u00e4t": 10,
-    "Bot-Historie": -15
-   },
-   "checks": {
-    "MC 1.2 Mio. (150k\u20131 Mio.)": false,
-    "Alter 86.1 Tage (1,5\u201314)": false,
-    "Liquidit\u00e4t 10 % der MC (\u226510 %)": false,
-    "24 h -73 % (kein Pump)": false,
-    "1 h -12 % (ruhig)": true,
-    "Volumen 126 % der MC (\u226530 %)": true
-   },
-   "shape": {
-    "ath_mc": 14639987,
-    "low12_mc": 799112,
-    "now_vs_ath": 9,
-    "h_since_low": 4,
-    "vol_up": 0.85,
-    "r1": -5,
-    "r6": -25,
-    "r24": -72,
-    "profiles": {
-     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
-     "Trend nahe Hoch": false,
-     "Seitw\u00e4rts, dann Volumen": false,
-     "Boden nach Absturz + Volumen": false,
-     "Boden nach Absturz": false
-    },
-    "best": null,
-    "pump": false
-   },
-   "notes": [
-    "1 Pool-Wallet(s) halten den Coin",
-    "auf der Verlust-Sperre (ein Bot hat damit verloren)",
-    "Bots: 11 von 20 Trades im Plus"
-   ],
-   "light": "gesperrt",
-   "smart": null,
-   "hold": {
-    "n": 1,
-    "wallets": [
-     {
-      "wallet": "9haKJiniE7HR5im7b9a74VUGD7vHDu6waBwAdQegwqQm",
-      "usd": 130.74,
-      "pnl10": 2.379,
-      "ohne_top": 0.577,
-      "win": 70.0,
-      "wal": false
-     }
-    ]
-   },
-   "plan": {
-    "stop_mc": 873167,
-    "stop_pct": -30,
-    "tp1_mc": 1496857,
-    "tp1_pct": 20,
-    "tp_mc": 1846124,
+    "tp_mc": 1355828,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -2228,14 +2229,14 @@
    "addr": "Fn95NtGXWPaJXc4N5y9rVkUq1NwZbjBNJzPVvNRLpump",
    "sym": "SHIT",
    "name": "Ah Shit, Here We Go Again",
-   "mc": 1067815,
-   "liq": 82902.82,
-   "vol24": 2444308.56,
-   "ch1": -19.74,
-   "ch24": -18.25,
+   "mc": 1076900,
+   "liq": 83303.14,
+   "vol24": 2412362.81,
+   "ch1": -12.65,
+   "ch24": -23.64,
    "age_d": 1.6,
-   "buys": 92483,
-   "sells": 40137,
+   "buys": 94010,
+   "sells": 39370,
    "top10": 10.041604103843683,
    "insider": 0.0,
    "cluster": null,
@@ -2260,11 +2261,29 @@
     "MC 1.1 Mio. (150k\u20131 Mio.)": false,
     "Alter 1.6 Tage (1,5\u201314)": true,
     "Liquidit\u00e4t 8 % der MC (\u226510 %)": false,
-    "24 h -18 % (kein Pump)": true,
-    "1 h -20 % (ruhig)": false,
-    "Volumen 229 % der MC (\u226530 %)": true
+    "24 h -24 % (kein Pump)": true,
+    "1 h -13 % (ruhig)": false,
+    "Volumen 224 % der MC (\u226530 %)": true
    },
-   "shape": {},
+   "shape": {
+    "ath_mc": 3534127,
+    "low12_mc": 970496,
+    "now_vs_ath": 30,
+    "h_since_low": 1,
+    "vol_up": 0.8,
+    "r1": 6,
+    "r6": -49,
+    "r24": -37,
+    "profiles": {
+     "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
+     "Trend nahe Hoch": false,
+     "Seitw\u00e4rts, dann Volumen": false,
+     "Boden nach Absturz + Volumen": false,
+     "Boden nach Absturz": false
+    },
+    "best": null,
+    "pump": false
+   },
    "notes": [
     "Risiken: Bundle-Muster (Top-Wallets fast gleich gro\u00df)"
    ],
@@ -2272,68 +2291,11 @@
    "smart": null,
    "hold": null,
    "plan": {
-    "stop_mc": 901236,
-    "stop_pct": -16,
-    "tp1_mc": 1281378,
+    "stop_mc": 915365,
+    "stop_pct": -15,
+    "tp1_mc": 1292280,
     "tp1_pct": 20,
-    "tp_mc": 1580366,
-    "tp_pct": 48,
-    "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
-   }
-  },
-  {
-   "addr": "65iH8k736QNhuUHm1tt8X7yJXpJ517HPPq8BrVdwring",
-   "sym": "Rings",
-   "name": "Rings",
-   "mc": 1334001,
-   "liq": 84097.18,
-   "vol24": 223621.3,
-   "ch1": 150,
-   "ch24": 122,
-   "age_d": 8.8,
-   "buys": 1479,
-   "sells": 1374,
-   "top10": 24.979141254839256,
-   "insider": 5.966378453619231,
-   "cluster": null,
-   "funnel": "weich: Contract",
-   "warns": [
-    "Liquidit\u00e4t 6 % der MC"
-   ],
-   "risk_soft": [
-    "LP 82 % gelockt"
-   ],
-   "src": "trending",
-   "score": 3,
-   "parts": {
-    "Smart-Money": 0,
-    "Kursbild": 0,
-    "Basis-Muster": 3,
-    "Markt-Qualit\u00e4t": 5,
-    "Bot-Historie": 0,
-    "Risiko": -5
-   },
-   "checks": {
-    "MC 1.3 Mio. (150k\u20131 Mio.)": false,
-    "Alter 8.8 Tage (1,5\u201314)": true,
-    "Liquidit\u00e4t 6 % der MC (\u226510 %)": false,
-    "24 h +122 % (kein Pump)": false,
-    "1 h +150 % (ruhig)": false,
-    "Volumen 17 % der MC (\u226530 %)": false
-   },
-   "shape": {},
-   "notes": [
-    "Risiken: LP 82 % gelockt"
-   ],
-   "light": "kein Signal",
-   "smart": null,
-   "hold": null,
-   "plan": {
-    "stop_mc": 1125897,
-    "stop_pct": -16,
-    "tp1_mc": 1600801,
-    "tp1_pct": 20,
-    "tp_mc": 1974321,
+    "tp_mc": 1593812,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -2342,15 +2304,15 @@
    "addr": "8J2VUcwne16c5LeYCSGBagPf32tDSFeGDzmD5B7nfmkY",
    "sym": "ANT",
    "name": "Anthropic Coin",
-   "mc": 2631830,
-   "liq": 135764.61,
-   "vol24": 39474711.94,
-   "ch1": 6.05,
-   "ch24": 193,
-   "age_d": 1.5,
-   "buys": 73872,
-   "sells": 67984,
-   "top10": 18.259492774552363,
+   "mc": 2718253,
+   "liq": 140510.57,
+   "vol24": 39555921.38,
+   "ch1": 3.83,
+   "ch24": 186,
+   "age_d": 1.6,
+   "buys": 73857,
+   "sells": 67981,
+   "top10": 18.24912883950779,
    "insider": 2.1016136699018024,
    "cluster": null,
    "funnel": "weich: Contract",
@@ -2372,22 +2334,22 @@
     "Risiko": -20
    },
    "checks": {
-    "MC 2.6 Mio. (150k\u20131 Mio.)": false,
-    "Alter 1.5 Tage (1,5\u201314)": true,
+    "MC 2.7 Mio. (150k\u20131 Mio.)": false,
+    "Alter 1.6 Tage (1,5\u201314)": true,
     "Liquidit\u00e4t 5 % der MC (\u226510 %)": false,
-    "24 h +193 % (kein Pump)": false,
-    "1 h +6 % (ruhig)": true,
-    "Volumen 1500 % der MC (\u226530 %)": true
+    "24 h +186 % (kein Pump)": false,
+    "1 h +4 % (ruhig)": true,
+    "Volumen 1455 % der MC (\u226530 %)": true
    },
    "shape": {
-    "ath_mc": 2664392,
-    "low12_mc": 1624986,
+    "ath_mc": 2758253,
+    "low12_mc": 1792657,
     "now_vs_ath": 99,
     "h_since_low": 0,
-    "vol_up": 0.99,
-    "r1": 2,
-    "r6": 26,
-    "r24": 185,
+    "vol_up": 1.0,
+    "r1": 1,
+    "r6": 25,
+    "r24": 190,
     "profiles": {
      "R\u00fccksetzer im Aufw\u00e4rtstrend": false,
      "Trend nahe Hoch": false,
@@ -2405,11 +2367,11 @@
    "smart": null,
    "hold": null,
    "plan": {
-    "stop_mc": 1842281,
+    "stop_mc": 1902777,
     "stop_pct": -30,
-    "tp1_mc": 3158196,
+    "tp1_mc": 3261904,
     "tp1_pct": 20,
-    "tp_mc": 3895108,
+    "tp_mc": 4023014,
     "tp_pct": 48,
     "tp_note": "Median-Peak kleiner Coins \u00fcber 1\u20133 Tage"
    }
@@ -2419,25 +2381,50 @@
   {
    "addr": "79rE2ac8JhN3U12QLhymgDmCTiwBN1d4maTcK1fhpump",
    "sym": "Apocrycoin",
-   "mc": 315100,
-   "ch1": 35.4,
-   "ch24": 640,
+   "mc": 246597,
+   "ch1": -32.31,
+   "ch24": 479,
    "age_d": 1.0
   },
   {
    "addr": "64Uf4fkAWepSjBF8QKWdftHjtgKb2FG6gZsgmx6Fpump",
    "sym": "FNDR",
-   "mc": 124719,
-   "ch1": -23.89,
-   "ch24": 386,
+   "mc": 147028,
+   "ch1": -29.02,
+   "ch24": 473,
    "age_d": 0.6
+  },
+  {
+   "addr": "ERDrmaqsoeLdsCMMpBKkRM4LV1mzTA2KHrVxKLpqpump",
+   "sym": "AudaCity",
+   "mc": 136815,
+   "ch1": -18.83,
+   "ch24": 190,
+   "age_d": 0.7
+  },
+  {
+   "addr": "2xCd5qHX5tW6pGUo7zfgHSSAnRjJwPA7Sz1Fu4fWcJjX",
+   "sym": "Mandy",
+   "mc": 308057,
+   "ch1": -0.65,
+   "ch24": 143,
+   "age_d": 1.1
   }
  ],
  "unsafe_smart": [
   {
+   "addr": "8HXsCMy8ma8QP2yVZXG5SZYyaTZw5AUrUDha1G4upump",
+   "sym": "Founder",
+   "mc": 288075,
+   "why": [
+    "LP nur 0 % gelockt bei jungem, kleinem Coin (Liquidit\u00e4t kann abgezogen werden)"
+   ],
+   "stage": "K.-o."
+  },
+  {
    "addr": "HWqyVJee2XWGRwpA78XAdf4yhttSSGfHgcmaB3espump",
    "sym": "AudaBros",
-   "mc": 195036,
+   "mc": 144342,
    "why": [
     "LP nur 0 % gelockt bei jungem, kleinem Coin (Liquidit\u00e4t kann abgezogen werden)"
    ],
